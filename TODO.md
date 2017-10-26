@@ -5,6 +5,10 @@ TODO
 
 - [ ] Add vendoring
 
+- [ ] Add zoom filtering (return http forbidden if z < minzoom or z > maxzoom)
+
+- [ ] Simplify config file (move to yaml or toml?)
+
 - [ ] Add headers png tiles (Expires, Cache-Control, ETag?)
 
 ```
