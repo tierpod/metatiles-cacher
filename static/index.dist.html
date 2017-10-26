@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>slippy map - Leaflet</title>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js" integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log==" crossorigin=""></script>
+
+</head>
+<body>
+
+
+
+<div id="mapid" style="position: fixed; width: 99%; height: 98%;"></div>
+<script>
+
+    var style1_layer = L.tileLayer('/maps/style1/{z}/{x}/{y}.png', {
+        minZoom: 1,
+        maxZoom: 17,
+        tileSize: 256,
+        id: 'style1'
+    });
+
+    var style2_layer = L.tileLayer('/maps/style2/{z}/{x}/{y}.png', {
+        minZoom: 1,
+        maxZoom: 17,
+        tileSize: 256,
+        id: 'style2'
+    });
+
+    var mymap = L.map('mapid', {
+        center: [55.44, 65.34],
+        zoom: 10,
+        layers: [style1]
+    });
+
+    /* last is default */
+    var control_layers = {
+        "style2": style2_layer,
+        "style1": style1_layer
+    };
+
+    L.control.layers(control_layers).addTo(mymap);
+    L.control.scale().addTo(mymap);
+
+    var popup = L.popup();
+
+    function onMapClick(e) {
+        point = mymap.project(e.latlng).divideBy(256).floor();
+        popup
+            .setLatLng(e.latlng)
+            .setContent(`lat lng: ${e.latlng.lat} ${e.latlng.lng} <br>z x y: ${mymap.getZoom()} ${point.x} ${point.y}`)
+            .openOn(mymap);
+    }
+    mymap.on('click', onMapClick);
+
+</script>
+
+
+
+</body>
+</html>
