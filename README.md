@@ -1,24 +1,24 @@
-## metatiles-writer
+metatiles-cacher
+================
 
-curl -X PUT --data '{...}' localhost:8081/api/add
+metatiles-cacher contains a few small services:
 
-## TODO
+1) metatiles-reader - for serving tiles from metatiles cache. Contains slippy-map based on [LeafLet][1].
 
-* add headers for png tiles
+2) metatiles-writer - for downloading tiles from remote sources and writes to metatiles cache.
 
-```
-< HTTP/1.1 200 OK
-< Date: Thu, 26 Oct 2017 12:51:54 GMT
-< Server: Apache/2.4.6 (CentOS)
-< ETag: "60879f10e430929fb2e11cacd7541b55"
-< Content-Length: 10439
-< Cache-Control: max-age=522300
-< Expires: Wed, 01 Nov 2017 13:56:54 GMT
-< Content-Type: image/png
-```
+3) convert_latlong - converts latitude and longtitude to z, x, y format
 
-* add User-Agent option for httpclient
 
-```
-User-Agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0";
-```
+Based on
+--------
+
+* [gopnik tile server][2]
+* [gosm library][3]
+
+
+
+[1]: http://leafletjs.com
+[2]: https://github.com/sputnik-maps/gopnik
+[3]: https://github.com/apeyroux/gosm
+
