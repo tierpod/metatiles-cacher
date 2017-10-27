@@ -7,6 +7,8 @@ TODO
 
 - [ ] Add zoom filtering (return http forbidden if z < minzoom or z > maxzoom)
 
+- [ ] Add testing metatiles created by renderd, write tests for reader and writer
+
 - [ ] Simplify config file (move to yaml or toml?)
 
 - [ ] Add headers png tiles (Expires, Cache-Control, ETag?)
