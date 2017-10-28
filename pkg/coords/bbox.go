@@ -1,6 +1,7 @@
 package coords
 
-// NewBBoxFromLatLong create output channel with ZXY tiles
+// NewBBoxFromLatLong calculates bbox from top to bottom coordinates for each zoom level in zooms.
+// Returns output chan with tiles from this bbox.
 func NewBBoxFromLatLong(zooms []int, top LatLong, bottom LatLong) <-chan (ZXY) {
 	bboxChan := make(chan ZXY)
 

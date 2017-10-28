@@ -1,6 +1,7 @@
 package coords
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -24,28 +25,6 @@ func TestConvertToXYBox(t *testing.T) {
 
 	if !reflect.DeepEqual(xybox, result) {
 		t.Errorf("ConvertToXYBox: expected %v, got %v", result, xybox)
-	}
-}
-
-func TestMetatilePath(t *testing.T) {
-	testData := []struct {
-		meta   Metatile
-		result string
-	}{
-		{
-			Metatile{10, [5]int{128, 180, 33, 0, 0}},
-			"10/0/0/33/180/128.meta",
-		},
-		{
-			Metatile{10, [5]int{128, 180, 33, 0, 0}},
-			"10/0/0/33/180/128.meta",
-		},
-	}
-
-	for _, tt := range testData {
-		if tt.meta.Path() != tt.result {
-			t.Errorf("Metatile Path(): expected %v, got %v", tt.result, tt.meta.Path())
-		}
 	}
 }
 
@@ -100,4 +79,13 @@ func TestMetatileMinXY(t *testing.T) {
 			t.Errorf("MinMetaXY: expected {X:%v Y:%v}, got {X:%v Y:%v}", tt.x, tt.y, x, y)
 		}
 	}
+}
+
+func ExampleMetatile_Path() {
+	meta := Metatile{Z: 1, Hashes: [5]int{2, 3, 4, 5, 6}}
+
+	fmt.Printf("%v\n", meta.Path())
+
+	// Output:
+	// 1/6/5/4/3/2.meta
 }

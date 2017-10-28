@@ -1,6 +1,7 @@
 package coords
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -56,29 +57,6 @@ func TestConvertToMeta(t *testing.T) {
 		m := tt.zxy.ConvertToMeta()
 		if m != tt.result {
 			t.Errorf("ZXY ConvertToLatLong: expected %v, got %v", tt.result, m)
-		}
-	}
-}
-
-func TestZXYPath(t *testing.T) {
-	var testData = []struct {
-		zxy    ZXY
-		result string
-	}{
-		{
-			ZXY{1, 1, 1},
-			"1/1/1.png",
-		},
-		{
-			ZXY{1, 1, 1},
-			"1/1/1.png",
-		},
-	}
-
-	for _, tt := range testData {
-		p := tt.zxy.Path()
-		if p != tt.result {
-			t.Errorf("ZXY Path(): expected %v, got %v", tt.result, p)
 		}
 	}
 }
@@ -190,4 +168,22 @@ func TestZXYMinMetaXY(t *testing.T) {
 			t.Errorf("MinMetaXY: expected {X:%v Y:%v}, got {X:%v Y:%v}", tt.x, tt.y, x, y)
 		}
 	}
+}
+
+func ExampleNewZXYFromURL() {
+	zxy, style, format, _ := NewZXYFromURL("/maps/style/1/2/3.png")
+
+	fmt.Printf("%v %v %v", zxy, style, format)
+
+	// Output:
+	// Tile{Z:1 X:2 Y:3} style png
+}
+
+func ExampleZXY_Path() {
+	zxy := ZXY{Z: 1, X: 2, Y: 3}
+
+	fmt.Printf("%v\n", zxy.Path())
+
+	// Output:
+	// 1/2/3.png
 }

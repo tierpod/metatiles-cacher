@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// ZXY is basic structure with z, x, y coordinates.
+// ZXY describes tile coordinates. Z: Zoom level, X, Y: X and Y coordinates.
 type ZXY struct {
 	Z, X, Y int
 }
@@ -24,13 +24,13 @@ func (t ZXY) String() string {
 	return LatLong{lat, long}
 }*/
 
-// ConvertToMeta converts z, x, y coordinates to meta
+// ConvertToMeta converts z, x, y to metatiles coordinates.
 func (t ZXY) ConvertToMeta() Metatile {
 	h := xyToMeta(t.X, t.Y)
 	return Metatile{Z: t.Z, Hashes: h}
 }
 
-// MinMetaXY calculates min x and y coordinates contains in metatile from tile X and Y coordinates
+// MinMetaXY returns mininal x and y coordinates contains in metatile.
 func (t ZXY) MinMetaXY() (x, y int) {
 	mask := MaxMetatileSize - 1
 	x = t.X & ^mask
@@ -38,7 +38,7 @@ func (t ZXY) MinMetaXY() (x, y int) {
 	return x, y
 }
 
-// Path returns filepath of tile
+// Path returns filepath of tile, based on Z, X, Y coordinates. Delimiter is "/".
 func (t ZXY) Path() string {
 	return strconv.Itoa(t.Z) + "/" + strconv.Itoa(t.X) + "/" + strconv.Itoa(t.Y) + ".png"
 }
@@ -55,10 +55,12 @@ func (t ZXY) Path() string {
 	return filepath.Join(dirs...)
 }*/
 
-// URLLength is the minimum url items length, splitted by separator "/"
+// URLLength is the minimum url items length, splitted by separator "/".
 const URLLength int = 4
 
-// NewZXYFromURL creates ZXY structure with additionals style and format from URL
+// NewZXYFromURL extracts ZXY, style, format from url string.
+//
+// Example: "/maps/style/1/2/3.png" -> Tile{Z: 1, X: 2, Y:3}, style, png
 func NewZXYFromURL(url string) (zxy ZXY, style, format string, err error) {
 	items := strings.Split(url, "/")
 	il := len(items)

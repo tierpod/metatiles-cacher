@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-// LatLong is basic structure with latitude and longtitude coordinates
+// LatLong describes tile coordinates. Lat: latitude, Long: longtitude coordinates.
 type LatLong struct {
 	Lat, Long float64
 }
@@ -14,7 +14,7 @@ func (t LatLong) String() string {
 	return fmt.Sprintf("LatLong{%v-%v}", t.Lat, t.Long)
 }
 
-// ConvertToZXY converts deg to num
+// ConvertToZXY converts deg to num.
 func (t LatLong) ConvertToZXY(zoom int) ZXY {
 	var x, y int
 	x = int(math.Floor((t.Long + 180.0) / 360.0 * (math.Exp2(float64(zoom)))))

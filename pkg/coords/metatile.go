@@ -7,18 +7,17 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/utils"
 )
 
-// MaxMetatileSize is the maximum metatile size (8 * 8 by default)
+// MaxMetatileSize is the maximum metatile size. Usually, metatile contains 8 * 8 tiles.
 const MaxMetatileSize int = 8
 
-// XYBox is the box of x and y coordinates
+// XYBox is the box of x and y coordinates contains in the metatile.
 type XYBox struct {
 	X []int
 	Y []int
 }
 type hashes [5]int
 
-// Metatile is basic structure contains z coordinate and hashes.
-// Path() method.
+// Metatile describes metatile coordinates. Z: Zoom level, Hashes: hashes, calculated from ZXY.
 type Metatile struct {
 	Z      int
 	Hashes hashes
@@ -28,13 +27,13 @@ func (m Metatile) String() string {
 	return fmt.Sprintf("Metatile{Z:%v Hashes:%v}", m.Z, m.Hashes)
 }
 
-// Size calculate and returns metatile size for this zoom
+// Size returns metatile size for this zoom level.
 func (m Metatile) Size() int {
 	size := metatileSize(m.Z)
 	return size
 }
 
-// ConvertToXYBox calculate and return box of x, y coordinates
+// ConvertToXYBox returns box of x, y coordinates.
 func (m Metatile) ConvertToXYBox() XYBox {
 	size := m.Size()
 	xMin, yMin := metaToXY(m.Hashes)
@@ -43,13 +42,13 @@ func (m Metatile) ConvertToXYBox() XYBox {
 	return XYBox{x, y}
 }
 
-// MinXY calculates min x and y coordinates contains in metatile from metatile hashes
+// MinXY returns mininal x and y coordinates contains in metatile.
 func (m Metatile) MinXY() (x int, y int) {
 	x, y = metaToXY(m.Hashes)
 	return
 }
 
-// Path returns filepath of metatile
+// Path returns filepath of metatile, based on zoom level and hashes. Delimiter is "/".
 func (m Metatile) Path() string {
 	h0 := strconv.Itoa(m.Hashes[0])
 	h1 := strconv.Itoa(m.Hashes[1])
