@@ -2,20 +2,21 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+
+	"gopkg.in/yaml.v2"
 )
 
 // Service is the root of configuration.
 type Service struct {
 	// metatiles_reader configuration
-	Reader Reader `json:"reader"`
+	Reader ReaderSection `yaml:"reader"`
 	// metatiles_writer configuration
-	Writer Writer `json:"writer"`
+	Writer WriterSection `yaml:"writer"`
 	// sources for reader and writer
-	Sources []Source `json:"sources"`
+	Sources []Source `yaml:"sources"`
 	// sources for reader and writer (in map)
 	SourcesMap map[string]string
 }
@@ -31,46 +32,46 @@ func (s Service) SourceInfo(source string) (name string, url string, err error) 
 	return "", "", fmt.Errorf("source for style %v not found", source)
 }
 
-// Reader is the "reader" section of configuration.
-type Reader struct {
+// ReaderSection is the "reader" section of configuration.
+type ReaderSection struct {
 	// Bind to address
-	Bind string `json:"bind"`
+	Bind string `yaml:"bind"`
 	// Add datetime to log?
-	LogDatetime bool `json:"log_datetime"`
+	LogDatetime bool `yaml:"log_datetime"`
 	// Show debug messages in log?
-	LogDebug bool `json:"log_debug"`
+	LogDebug bool `yaml:"log_debug"`
 	// Max zoom level
-	MaxZoom int `json:"max_zoom"`
+	MaxZoom int `yaml:"max_zoom"`
 	// Min zoom level
-	MinZoom int `json:"min_zoom"`
+	MinZoom int `yaml:"min_zoom"`
 	// Root directory for cache
-	RootDir string `json:"root_dir"`
+	RootDir string `yaml:"root_dir"`
 	// Writer service address. If "" - do not send request to writer.
-	WriterAddr string `json:"writer_addr"`
+	WriterAddr string `yaml:"writer_addr"`
 	// Token for XToken handler
-	XToken string `json:"x_token"`
+	XToken string `yaml:"x_token"`
 }
 
-// Writer is the "writer" section of configuration.
-type Writer struct {
-	Bind        string `json:"bind"`
-	LogDatetime bool   `json:"log_datetime"`
-	LogDebug    bool   `json:"log_debug"`
-	MaxZoom     int    `json:"max_zoom"`
-	MinZoom     int    `json:"min_zoom"`
-	RootDir     string `json:"root_dir"`
-	XToken      string `json:"x_token"`
+// WriterSection is the "writer" section of configuration.
+type WriterSection struct {
+	Bind        string `yaml:"bind"`
+	LogDatetime bool   `yaml:"log_datetime"`
+	LogDebug    bool   `yaml:"log_debug"`
+	MaxZoom     int    `yaml:"max_zoom"`
+	MinZoom     int    `yaml:"min_zoom"`
+	RootDir     string `yaml:"root_dir"`
+	XToken      string `yaml:"x_token"`
 }
 
-// Source is the item in the "sources" section of configuration.
+// Source is the item in the "sources" section of configuration, contains name and url.
 type Source struct {
 	// Name of the source
-	Name string `json:"name"`
+	Name string `yaml:"name"`
 	// Address of the source, contains "%v" will be replaced with "z/x/y.png"
-	URL string `json:"url"`
+	URL string `yaml:"url"`
 }
 
-// NewConfig loads json file and creates new service configuration.
+// NewConfig loads yaml file and creates new service configuration.
 func NewConfig(path string) *Service {
 	var c Service
 
@@ -79,7 +80,7 @@ func NewConfig(path string) *Service {
 		log.Fatal(err)
 	}
 
-	err = json.Unmarshal(data, &c)
+	err = yaml.Unmarshal(data, &c)
 	if err != nil {
 		log.Fatal(err)
 	}
