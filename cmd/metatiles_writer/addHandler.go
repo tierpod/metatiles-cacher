@@ -33,6 +33,12 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if j.Meta.Z < h.cfg.Writer.MinZoom || j.Meta.Z > h.cfg.Writer.MaxZoom {
+		h.logger.Printf("[ERROR] Wrong zoom level: Z(%v)", j.Meta.Z)
+		http.Error(w, "Wrong zoom level", http.StatusNotFound)
+		return
+	}
+
 	_, found := h.cfg.SourcesMap[j.Style]
 	if !found {
 		h.logger.Printf("[ERROR] Style not found in sources: %v", j.Style)

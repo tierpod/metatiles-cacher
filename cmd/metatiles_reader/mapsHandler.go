@@ -29,12 +29,19 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if zxy.Z < h.cfg.Reader.MinZoom || zxy.Z > h.cfg.Reader.MaxZoom {
+		h.logger.Printf("[ERROR] Wrong zoom level: Z(%v)", zxy.Z)
+		http.Error(w, "Wrong zoom level", http.StatusNotFound)
+		return
+	}
+
 	source, found := h.cfg.SourcesMap[style]
 	if !found {
 		h.logger.Printf("[ERROR] Style not found in sources: %v", style)
 		http.Error(w, "Style not found in sources", http.StatusNotFound)
 		return
 	}
+
 	h.logger.Printf("[DEBUG] Convert URL(%v) to %v, style(%v), format(%v)", r.URL.Path, zxy, style, format)
 
 	data, found, err := h.cache.Read(zxy, style)
