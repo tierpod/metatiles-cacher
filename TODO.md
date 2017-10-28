@@ -3,13 +3,13 @@ TODO
 
 - [ ] Do I need json for communication between reader and writer?
 
-- [ ] Add vendoring
+- [x] Add vendoring
 
-- [ ] Add zoom filtering (return http forbidden if z < minzoom or z > maxzoom)
+- [x] Add zoom filtering (return http forbidden if z < minzoom or z > maxzoom)
 
 - [ ] Add testing metatiles created by renderd, write tests for reader and writer
 
-- [ ] Simplify config file (move to yaml or toml?)
+- [x] Simplify config file (move to yaml or toml?)
 
 - [ ] Add headers png tiles (Expires, Cache-Control, ETag?)
 
@@ -32,3 +32,4 @@ User-Agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Fi
 
 - [ ] Use keepalive for fetchservice?
 
+- [ ] Write more docs
