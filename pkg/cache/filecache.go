@@ -7,15 +7,16 @@ import (
 	"path/filepath"
 
 	"github.com/tierpod/metatiles-cacher/pkg/coords"
+	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 )
 
-// FileCacheReader is the basic structure for file cache reader
+// FileCacheReader reads tile data from metatiles stored on the disk.
 type FileCacheReader struct {
 	RootDir string
 	logger  *log.Logger
 }
 
-// NewFileCacheReader creates new instance of FileCache
+// NewFileCacheReader creates new FileCacheReader. Return error if rootDir does not exist.
 func NewFileCacheReader(rootDir string, logger *log.Logger) (*FileCacheReader, error) {
 	if _, err := os.Stat(rootDir); os.IsNotExist(err) {
 		return nil, fmt.Errorf("NewFileCacheReader: %v is not exist", rootDir)
@@ -44,7 +45,7 @@ func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, foun
 	}
 	defer file.Close()
 
-	data, err = GetTileFromMetatile(file, tile)
+	data, err = metatile.GetTile(file, tile)
 	if err != nil {
 		return nil, false, fmt.Errorf("FileCacheReader: %v", err)
 	}
@@ -52,13 +53,13 @@ func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, foun
 	return data, true, nil
 }
 
-// FileCacheWriter is the basic structure for file cache writer
+// FileCacheWriter writes multiple tiles to disk in metatile format.
 type FileCacheWriter struct {
 	RootDir string
 	logger  *log.Logger
 }
 
-// NewFileCacheWriter creates new instance of FileCache
+// NewFileCacheWriter creates new FileCacheWriter. Return error if can not create rootDir.
 func NewFileCacheWriter(rootDir string, logger *log.Logger) (*FileCacheWriter, error) {
 	if _, err := os.Stat(rootDir); os.IsNotExist(err) {
 		logger.Printf("NewFileCacheWriter: Creating RootDir %v", rootDir)
@@ -77,7 +78,7 @@ func NewFileCacheWriter(rootDir string, logger *log.Logger) (*FileCacheWriter, e
 	return fc, nil
 }
 
-// Write saves metatile data to disk
+// Write writes metatile data to disk.
 func (w *FileCacheWriter) Write(meta coords.Metatile, style string, data [][]byte) error {
 	path := w.RootDir + "/" + style + "/" + meta.Path()
 	w.logger.Printf("FileCacheWriter: %v", path)
@@ -93,7 +94,7 @@ func (w *FileCacheWriter) Write(meta coords.Metatile, style string, data [][]byt
 	}
 	defer file.Close()
 
-	err = EncodeMetatile(file, meta, data)
+	err = metatile.Encode(file, meta, data)
 	if err != nil {
 		return fmt.Errorf("FileCacheWriter: %v", err)
 	}

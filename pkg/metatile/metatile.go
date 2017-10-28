@@ -1,4 +1,5 @@
-package cache
+// Package metatile provides functions for decoding and encoding metatile files.
+package metatile
 
 import (
 	"encoding/binary"
@@ -10,10 +11,10 @@ import (
 )
 
 const (
-	// MetatileMaxCount is the maximum count of tiles in metatile (default 8*8)
-	MetatileMaxCount = 1000
-	// MetatileMaxEntrySize is the maximum size of metatile entry
-	MetatileMaxEntrySize = 100000
+	// MaxCount is the maximum count of tiles in metatile.
+	MaxCount = 1000
+	// MaxEntrySize is the maximum size of metatile entry.
+	MaxEntrySize = 100000
 )
 
 type metaEntry struct {
@@ -54,8 +55,8 @@ func encodeHeader(w io.Writer, ml *metaLayout) error {
 	return nil
 }
 
-// EncodeMetatile encode tiles and writes to w
-func EncodeMetatile(w io.Writer, meta coords.Metatile, tiles [][]byte) error {
+// Encode encodes tiles to metatile and writes it to w.
+func Encode(w io.Writer, meta coords.Metatile, tiles [][]byte) error {
 	// f.write(struct.pack("4s4i", META_MAGIC, METATILE * METATILE, x, y, z))
 	x, y := meta.MinXY()
 	ml := &metaLayout{
@@ -93,7 +94,7 @@ func EncodeMetatile(w io.Writer, meta coords.Metatile, tiles [][]byte) error {
 	return nil
 }
 
-func decodeMetatileHeader(r io.Reader) (*metaLayout, error) {
+func decodeHeader(r io.Reader) (*metaLayout, error) {
 	endian := binary.LittleEndian
 	ml := new(metaLayout)
 
@@ -109,8 +110,8 @@ func decodeMetatileHeader(r io.Reader) (*metaLayout, error) {
 	if err = binary.Read(r, endian, &ml.Count); err != nil {
 		return nil, err
 	}
-	if ml.Count > MetatileMaxCount {
-		return nil, fmt.Errorf("Count > MetatileMaxCount (Count = %v)", ml.Count)
+	if ml.Count > MaxCount {
+		return nil, fmt.Errorf("Count > MaxCount (Count = %v)", ml.Count)
 	}
 
 	if err = binary.Read(r, endian, &ml.X); err != nil {
@@ -133,9 +134,9 @@ func decodeMetatileHeader(r io.Reader) (*metaLayout, error) {
 	return ml, nil
 }
 
-// GetTileFromMetatile get tile data from metatile
-func GetTileFromMetatile(r io.ReadSeeker, t coords.ZXY) ([]byte, error) {
-	ml, err := decodeMetatileHeader(r)
+// GetTile decodes metatile from r and extract tile data.
+func GetTile(r io.ReadSeeker, t coords.ZXY) ([]byte, error) {
+	ml, err := decodeHeader(r)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +147,7 @@ func GetTileFromMetatile(r io.ReadSeeker, t coords.ZXY) ([]byte, error) {
 		return nil, fmt.Errorf("Invalid index %v/%v", index, ml.Count)
 	}
 	entry := ml.Index[index]
-	if entry.Size > MetatileMaxEntrySize {
+	if entry.Size > MaxEntrySize {
 		return nil, fmt.Errorf("entry size > MetatileMaxEntrySize (size: %v)", entry.Size)
 	}
 	r.Seek(int64(entry.Offset), 0)
