@@ -1,4 +1,4 @@
-// Package config contains functions for loading service config.
+// Package config contains functions for loading configuration file.
 package config
 
 import (
@@ -10,61 +10,67 @@ import (
 
 // Service is the root of configuration.
 type Service struct {
-	Reader  Reader   `json:"reader"`
-	Writer  Writer   `json:"writer"`
+	// metatiles_reader configuration
+	Reader Reader `json:"reader"`
+	// metatiles_writer configuration
+	Writer Writer `json:"writer"`
+	// sources for reader and writer
 	Sources []Source `json:"sources"`
+	// sources for reader and writer (in map)
+	SourcesMap map[string]string
 }
 
-// GetStyleInfo returns information about style from config: name, url
-func (s Service) GetStyleInfo(style string) (name string, urlTmpl string, err error) {
+// SourceInfo returns information about source from config: {name: url}. Return err if source not found.
+func (s Service) SourceInfo(source string) (name string, url string, err error) {
 	for _, v := range s.Sources {
-		if v.Name == style {
+		if v.Name == source {
 			return v.Name, v.URL, nil
 		}
 	}
 
-	return "", "", fmt.Errorf("source for style %v not found", style)
+	return "", "", fmt.Errorf("source for style %v not found", source)
 }
 
-// SourcesToMap converts Sources to map: name=url
-func (s Service) SourcesToMap() map[string]string {
-	result := make(map[string]string)
-	for _, v := range s.Sources {
-		result[v.Name] = v.URL
-	}
-
-	return result
-}
-
-// Reader is the "reader" section of configuration
+// Reader is the "reader" section of configuration.
 type Reader struct {
-	Bind        string `json:"bind"`
-	LogDebug    bool   `json:"log_debug"`
-	LogDatetime bool   `json:"log_datetime"`
-	MinZoom     int    `json:"min_zoom"`
-	MaxZoom     int    `json:"max_zoom"`
-	XToken      string `json:"x_token"`
-	RootDir     string `json:"root_dir"`
-	Writer      bool   `json:"writer"`
-	WriterAddr  string `json:"writer_addr"`
+	// Bind to address
+	Bind string `json:"bind"`
+	// Add datetime to log?
+	LogDatetime bool `json:"log_datetime"`
+	// Show debug messages in log?
+	LogDebug bool `json:"log_debug"`
+	// Max zoom level
+	MaxZoom int `json:"max_zoom"`
+	// Min zoom level
+	MinZoom int `json:"min_zoom"`
+	// Root directory for cache
+	RootDir string `json:"root_dir"`
+	// Writer service address. If "" - do not send request to writer.
+	WriterAddr string `json:"writer_addr"`
+	// Token for XToken handler
+	XToken string `json:"x_token"`
 }
 
-// Writer is the "writer" section of configuration
+// Writer is the "writer" section of configuration.
 type Writer struct {
 	Bind        string `json:"bind"`
-	LogDebug    bool   `json:"log_debug"`
 	LogDatetime bool   `json:"log_datetime"`
-	XToken      string `json:"x_token"`
+	LogDebug    bool   `json:"log_debug"`
+	MaxZoom     int    `json:"max_zoom"`
+	MinZoom     int    `json:"min_zoom"`
 	RootDir     string `json:"root_dir"`
+	XToken      string `json:"x_token"`
 }
 
-// Source is the item in the "sources" section
+// Source is the item in the "sources" section of configuration.
 type Source struct {
+	// Name of the source
 	Name string `json:"name"`
-	URL  string `json:"url"`
+	// Address of the source, contains "%v" will be replaced with "z/x/y.png"
+	URL string `json:"url"`
 }
 
-// NewConfig creates new ServiceConf from file
+// NewConfig loads json file and creates new service configuration.
 func NewConfig(path string) *Service {
 	var c Service
 
@@ -78,5 +84,16 @@ func NewConfig(path string) *Service {
 		log.Fatal(err)
 	}
 
+	c.SourcesMap = c.sourcesToMap()
+
 	return &c
+}
+
+func (s Service) sourcesToMap() map[string]string {
+	result := make(map[string]string)
+	for _, v := range s.Sources {
+		result[v.Name] = v.URL
+	}
+
+	return result
 }

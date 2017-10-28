@@ -34,7 +34,6 @@ func main() {
 	}
 
 	cfg := config.NewConfig(flagConfig)
-	sources := cfg.SourcesToMap()
 
 	logger := logger.NewLogger(os.Stdout, cfg.Writer.LogDebug, cfg.Writer.LogDatetime)
 
@@ -47,7 +46,11 @@ func main() {
 	fetchservice := fetchservice.NewFetchService(1, filecache, logger)
 
 	http.Handle("/api/add/", handlers.LogConnection(
-		addHandler{cache: filecache, fs: fetchservice, sources: sources, logger: logger}, logger))
+		addHandler{
+			cache:  filecache,
+			fs:     fetchservice,
+			cfg:    cfg,
+			logger: logger}, logger))
 	http.Handle("/status", handlers.LogConnection(
 		handlers.XToken(statusHandler{}, cfg.Writer.XToken, logger),
 		logger))

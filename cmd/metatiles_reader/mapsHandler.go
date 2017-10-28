@@ -9,17 +9,16 @@ import (
 	"strconv"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
+	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/coords"
 	"github.com/tierpod/metatiles-cacher/pkg/fetchservice"
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 )
 
 type mapsHandler struct {
-	logger     *log.Logger
-	cache      cache.Reader
-	sources    map[string]string
-	writer     bool
-	writerAddr string
+	logger *log.Logger
+	cache  cache.Reader
+	cfg    *config.Service
 }
 
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +29,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	source, found := h.sources[style]
+	source, found := h.cfg.SourcesMap[style]
 	if !found {
 		h.logger.Printf("[ERROR] Style not found in sources: %v", style)
 		http.Error(w, "Style not found in sources", http.StatusNotFound)
@@ -56,12 +55,12 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Send request to metatiles-writer
-		if h.writer {
+		if h.cfg.Reader.WriterAddr != "" {
 			h.logger.Printf("Send request to writer: %v, style(%v)", zxy.ConvertToMeta(), style)
 			job := fetchservice.NewJob(zxy.ConvertToMeta(), style, source)
 			buf := new(bytes.Buffer)
 			json.NewEncoder(buf).Encode(job)
-			err := httpclient.PostJSON(h.writerAddr, buf)
+			err := httpclient.PostJSON(h.cfg.Reader.WriterAddr, buf)
 			if err != nil {
 				h.logger.Printf("[ERROR] %v\n", err)
 				return

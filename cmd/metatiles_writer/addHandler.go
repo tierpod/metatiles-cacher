@@ -6,14 +6,15 @@ import (
 	"net/http"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
+	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/fetchservice"
 )
 
 type addHandler struct {
-	logger  *log.Logger
-	cache   cache.Writer
-	fs      *fetchservice.FetchService
-	sources map[string]string
+	logger *log.Logger
+	cache  cache.Writer
+	fs     *fetchservice.FetchService
+	cfg    *config.Service
 }
 
 func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +33,7 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, found := h.sources[j.Style]
+	_, found := h.cfg.SourcesMap[j.Style]
 	if !found {
 		h.logger.Printf("[ERROR] Style not found in sources: %v", j.Style)
 		http.Error(w, "Style not found in sources", http.StatusNotFound)

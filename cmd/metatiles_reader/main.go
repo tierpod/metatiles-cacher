@@ -35,7 +35,6 @@ func main() {
 	}
 
 	cfg := config.NewConfig(flagConfig)
-	sources := cfg.SourcesToMap()
 
 	logger := logger.NewLogger(os.Stdout, cfg.Reader.LogDebug, cfg.Reader.LogDatetime)
 
@@ -54,11 +53,9 @@ func main() {
 	)
 	http.Handle("/maps/", handlers.LogConnection(
 		mapsHandler{
-			logger:     logger,
-			cache:      filecache,
-			sources:    sources,
-			writer:     cfg.Reader.Writer,
-			writerAddr: cfg.Reader.WriterAddr,
+			logger: logger,
+			cache:  filecache,
+			cfg:    cfg,
 		}, logger))
 
 	logger.Printf("Starting web server on: %v", cfg.Reader.Bind)
