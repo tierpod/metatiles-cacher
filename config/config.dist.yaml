@@ -19,7 +19,7 @@ writer:
 
 sources:
   - name: example
-    url: http://example/style/%v
+    url: http://example/style/{zxy}
 
   - name: test
-    url: http://test/%v?api_key=123
+    url: http://test/{zxy}?api_key=123

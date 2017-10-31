@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
@@ -54,8 +54,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if not found in cache
-	url := fmt.Sprintf(source, zxy.Path())
+	url := strings.Replace(source, "{zxy}", zxy.Path(), 1)
 	h.logger.Printf("Get from source %v", url)
 
 	data, err = httpclient.Get(url)

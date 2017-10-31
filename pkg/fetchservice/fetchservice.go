@@ -1,18 +1,19 @@
-// Package fetchservice starts bagroundd service for fetching tiles from remote source and saves it to disk in
-// metatile format.
+// Package fetchservice starts background service for fetching tiles from remote sources
+// and writes it to disk in metatile format.
 package fetchservice
 
 import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 	"github.com/tierpod/metatiles-cacher/pkg/queue"
 )
 
-// FetchService is the structure for background fetch and write service
+// FetchService contains channel WriteCh with jobs and FetchQueue for tracking active fetching jobs.
 type FetchService struct {
 	WriteCh    chan Job
 	FetchQueue *queue.Uniq
@@ -20,7 +21,9 @@ type FetchService struct {
 	cw         cache.Writer
 }
 
-// NewFetchService creates new FetchService
+// NewFetchService creates new FetchService and starts background goroutine with infinity loop
+// for reading WriteCh. When job sends to the WriteCh, this goroutine receive it and starts new
+// goroutine for fetching and writing tiles data to disk.
 func NewFetchService(buffer int, cw cache.Writer, logger *log.Logger) *FetchService {
 	fq := queue.NewUniq()
 	//wch := make(chan coords.Metatile, buffer)
@@ -57,10 +60,11 @@ func (fs *FetchService) fetchAndWrite(j Job) error {
 	minX, minY := j.Meta.MinXY()
 	fs.logger.Printf("FetchService: Fetch Style(%v) Z(%v) X(%v-%v) Y(%v-%v)", j.Style, j.Meta.Z, minX, minX+j.Meta.Size(), minY, minY+j.Meta.Size())
 
-	for _, x := range j.Meta.ConvertToXYBox().X {
-		for _, y := range j.Meta.ConvertToXYBox().Y {
+	xybox := j.Meta.ConvertToXYBox()
+	for _, x := range xybox.X {
+		for _, y := range xybox.Y {
 			zxy = strconv.Itoa(j.Meta.Z) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + ".png"
-			url = fmt.Sprintf(j.Source, zxy)
+			url = strings.Replace(j.Source, "{zxy}", zxy, 1)
 			// fc.logger.Printf("[DEBUG] Filecache/fetchAndWrite: Fetch %v", url)
 			res, err := httpclient.Get(url)
 			if err != nil {
@@ -79,11 +83,11 @@ func (fs *FetchService) fetchAndWrite(j Job) error {
 	return nil
 }
 
-// Add checks FetchQueue and add metatile to active queue if not exist
+// Add checks FetchQueue and add metatile to active fetch queue if not exist.
 func (fs *FetchService) Add(j Job) {
 	// TODO: limiter?
 	if !fs.FetchQueue.Add(j.Meta.Path()) {
-		log.Printf("[DEBUG] FetchService: Skip %+v, in the active queue", j)
+		log.Printf("[DEBUG] FetchService: Skip %+v, in the fetch queue", j)
 		return
 	}
 	select {
