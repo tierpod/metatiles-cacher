@@ -1,4 +1,4 @@
-// Package logger contain function for logging
+// Package logger helps to configure logger with filtering.
 package logger
 
 import (
@@ -8,12 +8,12 @@ import (
 	"github.com/hashicorp/logutils"
 )
 
-// NewLogger return new logger with filtered levels:
+// NewLogger returns new logger with filtered levels:
 //   {"DEBUG", "WARN", "ERROR", "INFO"}
 //
-// If debug: true, show messages from "DEBUG" level
+// If debug=true, show messages from "DEBUG" level.
 //
-// If datetime: true, show datetime in log message
+// If datetime=true, show datetime in log message.
 func NewLogger(out io.Writer, debug, datetime bool) *log.Logger {
 	levels := []logutils.LogLevel{"DEBUG", "WARN", "ERROR", "INFO"}
 
