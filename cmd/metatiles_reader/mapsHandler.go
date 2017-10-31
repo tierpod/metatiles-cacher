@@ -24,7 +24,7 @@ type mapsHandler struct {
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	zxy, style, format, err := coords.NewZXYFromURL(r.URL.Path)
 	if err != nil {
-		h.logger.Printf("[ERROR] %v", err)
+		h.logger.Printf("[ERROR] Wrong request: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -51,18 +51,27 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !found {
-		url := fmt.Sprintf(source, zxy.Path())
-		h.logger.Printf("Fetch from upstream %v", url)
-		data, err = httpclient.Get(url)
-		if err != nil {
-			h.logger.Printf("[ERROR] %v\n", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	// if found in cache
+	if found {
+		mapsReply(w, data)
+		return
+	}
 
-		// Send request to metatiles-writer
-		if h.cfg.Reader.WriterAddr != "" {
+	// if not found in cache
+	url := fmt.Sprintf(source, zxy.Path())
+	h.logger.Printf("Get from source %v", url)
+
+	data, err = httpclient.Get(url)
+	if err != nil {
+		h.logger.Printf("[ERROR] %v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	mapsReply(w, data)
+
+	// Send request to metatiles_writer
+	if h.cfg.Reader.WriterAddr != "" {
+		go func() {
 			h.logger.Printf("Send request to writer: %v, style(%v)", zxy.ConvertToMeta(), style)
 			job := fetchservice.NewJob(zxy.ConvertToMeta(), style, source)
 			buf := new(bytes.Buffer)
@@ -72,11 +81,14 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				h.logger.Printf("[ERROR] %v\n", err)
 				return
 			}
-		}
+		}()
 	}
 
+	return
+}
+
+func mapsReply(w http.ResponseWriter, data []byte) {
 	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.Write(data)
-	return
 }

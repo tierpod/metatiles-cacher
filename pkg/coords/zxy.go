@@ -55,17 +55,15 @@ func (t ZXY) Path() string {
 	return filepath.Join(dirs...)
 }*/
 
-// URLLength is the minimum url items length, splitted by separator "/".
-const URLLength int = 4
+// ZXYMinURLPathItems is the minimum url items, splitted by separator "/".
+const ZXYMinURLPathItems int = 4
 
 // NewZXYFromURL extracts ZXY, style, format from url string.
-//
-// Example: "/maps/style/1/2/3.png" -> Tile{Z: 1, X: 2, Y:3}, style, png
 func NewZXYFromURL(url string) (zxy ZXY, style, format string, err error) {
 	items := strings.Split(url, "/")
 	il := len(items)
-	if il < URLLength {
-		err = fmt.Errorf("NewZXYFromURL: Wrong url items length: expected %v, got %v", URLLength, url)
+	if il < ZXYMinURLPathItems {
+		err = fmt.Errorf("NewZXYFromURL: Wrong url items length: expected %v, got %v", ZXYMinURLPathItems, url)
 		return
 	}
 

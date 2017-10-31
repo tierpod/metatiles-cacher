@@ -84,6 +84,11 @@ func TestNewZXYFromURL(t *testing.T) {
 			"style", "png",
 			ZXY{10, 697, 321},
 		},
+		{
+			"http://localhost:8080/test/api/add/style/10/697/321.png",
+			"style", "png",
+			ZXY{10, 697, 321},
+		},
 	}
 
 	for _, tt := range testData {
