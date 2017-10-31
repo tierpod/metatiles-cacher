@@ -12,17 +12,17 @@ import (
 func Get(url string) (data []byte, err error) {
 	res, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Get %v: %v", url, err)
+		return nil, fmt.Errorf("httpclient.Get: %v: %v", url, err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("Get: %v: Response status %v", url, res.StatusCode)
+		return nil, fmt.Errorf("httpclient.Get: %v: Response status %v", url, res.StatusCode)
 	}
 
 	data, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Get: %v", err)
+		return nil, fmt.Errorf("httpclient.Get: %v", err)
 	}
 	return data, nil
 }
@@ -31,12 +31,12 @@ func Get(url string) (data []byte, err error) {
 func PostJSON(url string, body io.Reader) error {
 	res, err := http.Post(url, "application/json; charset=utf-8", body)
 	if err != nil {
-		return fmt.Errorf("PostJSON: %v: %v", url, err)
+		return fmt.Errorf("httpclient.PostJSON: %v: %v", url, err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return fmt.Errorf("PostJSON: %v: Response status %v", url, res.StatusCode)
+		return fmt.Errorf("httpclient.PostJSON: %v: Response status %v", url, res.StatusCode)
 	}
 
 	return nil

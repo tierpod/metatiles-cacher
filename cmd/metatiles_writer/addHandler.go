@@ -39,14 +39,15 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, found := h.cfg.SourcesMap[j.Style]
+	source, found := h.cfg.SourcesMap[j.Style]
 	if !found {
 		h.logger.Printf("[ERROR] Style not found in sources: %v", j.Style)
 		http.Error(w, "Style not found in sources", http.StatusNotFound)
 		return
 	}
+	j.Source = source
 
-	h.logger.Printf("Receive data: %v Style(%v)", j.Meta, j.Style)
+	h.logger.Printf("Receive data: %+v", j)
 
 	h.fs.Add(j)
 }

@@ -50,7 +50,7 @@ func (fs *FetchService) fetchAndWrite(j Job) error {
 	var url, zxy string
 
 	defer func() {
-		fs.logger.Printf("[DEBUG] FetchService/fetchAndWrite: Done %v, delete from active queue", j.Meta)
+		fs.logger.Printf("[DEBUG] FetchService/fetchAndWrite: Done %v, delete from fetch queue", j.Meta)
 		fs.FetchQueue.Del(j.Meta.Path())
 	}()
 
@@ -83,12 +83,12 @@ func (fs *FetchService) fetchAndWrite(j Job) error {
 func (fs *FetchService) Add(j Job) {
 	// TODO: limiter?
 	if !fs.FetchQueue.Add(j.Meta.Path()) {
-		log.Printf("[DEBUG] FetchService: Skip %v, in the active queue", j)
+		log.Printf("[DEBUG] FetchService: Skip %+v, in the active queue", j)
 		return
 	}
 	select {
 	case fs.WriteCh <- j:
-		fs.logger.Printf("[DEBUG] FetchService/Add: Send %v to writer channel", j)
+		fs.logger.Printf("[DEBUG] FetchService/Add: Send %+v to writer channel", j)
 	default:
 		fs.logger.Printf("[ERROR] FetchService/Add: Writer channel is full")
 	}

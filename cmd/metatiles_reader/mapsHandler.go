@@ -73,7 +73,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.cfg.Reader.WriterAddr != "" {
 		go func() {
 			h.logger.Printf("Send request to writer: %v, style(%v)", zxy.ConvertToMeta(), style)
-			job := fetchservice.NewJob(zxy.ConvertToMeta(), style, source)
+			job := fetchservice.NewJob(zxy.ConvertToMeta(), style, "")
 			buf := new(bytes.Buffer)
 			json.NewEncoder(buf).Encode(job)
 			err := httpclient.PostJSON(h.cfg.Reader.WriterAddr, buf)
