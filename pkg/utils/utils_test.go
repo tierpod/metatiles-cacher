@@ -1,6 +1,9 @@
 package utils
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestMakeIntRange(t *testing.T) {
 	result := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
@@ -17,6 +20,14 @@ func TestMakeIntRange(t *testing.T) {
 	}
 }
 
+func ExampleMakeIntRange() {
+	r := MakeIntRange(1, 10)
+	fmt.Printf("%v\n", r)
+
+	// Output:
+	// [1 2 3 4 5 6 7 8 9]
+}
+
 func TestMakeInludedIntRange(t *testing.T) {
 	result := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	r := MakeIncludedIntRange(1, 10)
@@ -30,4 +41,12 @@ func TestMakeInludedIntRange(t *testing.T) {
 			t.Errorf("MakeIntRange(1, 18): invalid slice item (expected: %v, got %v)", result[i], r[i])
 		}
 	}
+}
+
+func ExampleMakeIncludedIntRange() {
+	r := MakeIncludedIntRange(1, 10)
+	fmt.Printf("%v\n", r)
+
+	// Output:
+	// [1 2 3 4 5 6 7 8 9 10]
 }
