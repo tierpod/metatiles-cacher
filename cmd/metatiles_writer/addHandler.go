@@ -1,9 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/tierpod/metatiles-cacher/pkg/coords"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
@@ -18,34 +19,27 @@ type addHandler struct {
 }
 
 func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var j fetchservice.Job
-
-	if r.Body == nil {
-		h.logger.Printf("[ERROR] Empty Body")
-		http.Error(w, "Empty Body", http.StatusNotFound)
-		return
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&j)
+	meta, style, err := coords.NewMetaFromURL(r.URL.Path)
 	if err != nil {
-		h.logger.Printf("[ERROR]: Json decode: %v", err)
+		h.logger.Printf("[ERROR] %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if j.Meta.Z < h.cfg.Writer.MinZoom || j.Meta.Z > h.cfg.Writer.MaxZoom {
-		h.logger.Printf("[ERROR] Wrong zoom level: Z(%v)", j.Meta.Z)
+	if meta.Z < h.cfg.Writer.MinZoom || meta.Z > h.cfg.Writer.MaxZoom {
+		h.logger.Printf("[ERROR] Wrong zoom level: Z(%v)", meta.Z)
 		http.Error(w, "Wrong zoom level", http.StatusNotFound)
 		return
 	}
 
-	source, found := h.cfg.SourcesMap[j.Style]
+	source, found := h.cfg.SourcesMap[style]
 	if !found {
-		h.logger.Printf("[ERROR] Style not found in sources: %v", j.Style)
+		h.logger.Printf("[ERROR] Style not found in sources: %v", style)
 		http.Error(w, "Style not found in sources", http.StatusNotFound)
 		return
 	}
-	j.Source = source
+
+	j := fetchservice.NewJob(meta, style, source)
 
 	h.logger.Printf("Receive data: %+v", j)
 

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,7 +9,6 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/coords"
-	"github.com/tierpod/metatiles-cacher/pkg/fetchservice"
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 )
 
@@ -73,10 +70,8 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.cfg.Reader.WriterAddr != "" {
 		go func() {
 			h.logger.Printf("Send request to writer: %v, style(%v)", zxy.ConvertToMeta(), style)
-			job := fetchservice.NewJob(zxy.ConvertToMeta(), style, "")
-			buf := new(bytes.Buffer)
-			json.NewEncoder(buf).Encode(job)
-			err := httpclient.PostJSON(h.cfg.Reader.WriterAddr, buf)
+			url := h.cfg.Reader.WriterAddr + "/" + style + "/" + zxy.ConvertToMeta().Path()
+			_, err := httpclient.Get(url)
 			if err != nil {
 				h.logger.Printf("[ERROR] %v\n", err)
 				return
