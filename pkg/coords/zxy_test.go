@@ -61,7 +61,7 @@ func TestConvertToMeta(t *testing.T) {
 	}
 }
 
-func BenchmarkZXYPath1000(b *testing.B) {
+func BenchmarkZXYPath(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		t := ZXY{0, 0, 0}
 		t.Path()
@@ -172,6 +172,12 @@ func TestZXYMinMetaXY(t *testing.T) {
 		if x != tt.x || y != tt.y {
 			t.Errorf("MinMetaXY: expected {X:%v Y:%v}, got {X:%v Y:%v}", tt.x, tt.y, x, y)
 		}
+	}
+}
+
+func BenchmarkNewZXYFromURL(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		NewZXYFromURL("/maps/style/1/2/3.png")
 	}
 }
 

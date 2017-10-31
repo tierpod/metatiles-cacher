@@ -165,6 +165,12 @@ func TestNewMetaFromURL(t *testing.T) {
 	}
 }
 
+func BenchmarkNewMetaFromURL(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		NewMetaFromURL("/maps/style/10/0/1/2/3/4.meta")
+	}
+}
+
 func ExampleMetatile_Path() {
 	meta := Metatile{Z: 1, Hashes: [5]int{2, 3, 4, 5, 6}}
 
