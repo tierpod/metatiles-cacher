@@ -3,6 +3,7 @@ package coords
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/tierpod/metatiles-cacher/pkg/utils"
 )
@@ -109,4 +110,65 @@ func metatileSize(z int) int {
 		return n
 	}
 	return MaxMetatileSize
+}
+
+// MetaMinURLPathItems is the minimum url items, splitted by separator "/".
+const MetaMinURLPathItems int = 7
+
+// NewMetaFromURL extracts Metatile zoom, hashes, style from url string.
+func NewMetaFromURL(url string) (m Metatile, style string, err error) {
+	items := strings.Split(url, "/")
+	il := len(items)
+	if il < MetaMinURLPathItems {
+		err = fmt.Errorf("NewMetaFromURL: Wrong url items length: expected %v, got %v", MetaMinURLPathItems, url)
+		return
+	}
+
+	// processing -1 value (item.format)
+	last := strings.Split(items[il-1], ".")
+	if len(last) != 2 {
+		err = fmt.Errorf("NewMetaFromURL: Wrong last item: %v", items[il-1])
+		return
+	}
+
+	h0, err := strconv.Atoi(last[0])
+	if err != nil {
+		err = fmt.Errorf("NewMetaFromURL: h0: %v", err)
+		return
+	}
+
+	h1, err := strconv.Atoi(items[il-2])
+	if err != nil {
+		err = fmt.Errorf("NewMetaFromURL: h1: %v", err)
+		return
+	}
+
+	h2, err := strconv.Atoi(items[il-3])
+	if err != nil {
+		err = fmt.Errorf("NewMetaFromURL: h2: %v", err)
+		return
+	}
+
+	h3, err := strconv.Atoi(items[il-4])
+	if err != nil {
+		err = fmt.Errorf("NewMetaFromURL: h3: %v", err)
+		return
+	}
+
+	h4, err := strconv.Atoi(items[il-5])
+	if err != nil {
+		err = fmt.Errorf("NewMetaFromURL: h4: %v", err)
+		return
+	}
+	m.Hashes = [5]int{h0, h1, h2, h3, h4}
+
+	m.Z, err = strconv.Atoi(items[il-6])
+	if err != nil {
+		err = fmt.Errorf("NewMetaFromURL: Z: %v", err)
+		return
+	}
+
+	style = items[il-7]
+
+	return m, style, nil
 }
