@@ -1,22 +1,23 @@
-// Package queue contains queue implementation of unique items
+// Package queue implements queue with unique strings.
 package queue
 
 import "sync"
 
-// Uniq is the struct contains safe-thread queue implementation with unique items
+// Uniq contains mutex and map for storing strings.
 type Uniq struct {
 	mx sync.RWMutex
 	m  map[string]bool
 }
 
-// NewUniq creates new Uniq
+// NewUniq creates new Uniq queue.
 func NewUniq() *Uniq {
 	return &Uniq{
 		m: make(map[string]bool),
 	}
 }
 
-// Add adds key to map if item with this key does not exist (return true). Otherwise return false
+// Add adds key to map if item with this key does not exist (return true).
+// Skip if key exist (return false).
 func (q *Uniq) Add(key string) bool {
 	q.mx.Lock()
 	defer q.mx.Unlock()
@@ -30,7 +31,7 @@ func (q *Uniq) Add(key string) bool {
 	return false
 }
 
-// Del deletes key from map
+// Del deletes key from map.
 func (q *Uniq) Del(key string) {
 	q.mx.Lock()
 	defer q.mx.Unlock()
@@ -38,14 +39,14 @@ func (q *Uniq) Del(key string) {
 	delete(q.m, key)
 }
 
-// Len returns map length
+// Len returns map length.
 func (q *Uniq) Len() int {
 	q.mx.RLock()
 	defer q.mx.RUnlock()
 	return len(q.m)
 }
 
-// Items returns string slice with items from maps
+// Items returns slice of keys storing in map.
 func (q *Uniq) Items() []string {
 	q.mx.RLock()
 	defer q.mx.RLocker()
