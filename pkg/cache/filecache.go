@@ -33,7 +33,7 @@ func NewFileCacheReader(rootDir string, logger *log.Logger) (*FileCacheReader, e
 // Read reads tile data from metatile. Returns found = false and err = nil if metatile not found.
 func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, found bool, err error) {
 	path := r.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
-	r.logger.Printf("[DEBUG] FileCacheReader: Get tile %v from metatile %v", tile, path)
+	r.logger.Printf("[DEBUG] FileCacheReader: Read %v from metatile %v", tile, path)
 
 	file, err := os.Open(path)
 	if os.IsNotExist(err) {
@@ -81,7 +81,7 @@ func NewFileCacheWriter(rootDir string, logger *log.Logger) (*FileCacheWriter, e
 // Write writes metatile data to disk.
 func (w *FileCacheWriter) Write(meta coords.Metatile, style string, data [][]byte) error {
 	path := w.RootDir + "/" + style + "/" + meta.Path()
-	w.logger.Printf("FileCacheWriter: %v", path)
+	w.logger.Printf("FileCacheWriter: write %v", path)
 
 	err := os.MkdirAll(filepath.Dir(path), 0777)
 	if err != nil {

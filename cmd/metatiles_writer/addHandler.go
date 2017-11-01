@@ -41,7 +41,7 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	j := fetchservice.NewJob(meta, style, source)
 
-	h.logger.Printf("Receive data: %+v", j)
+	h.logger.Printf("[DEBUG] Receive data: %v", j)
 
 	h.fs.Add(j)
 }
