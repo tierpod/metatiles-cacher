@@ -81,16 +81,19 @@ func Encode(w io.Writer, meta coords.Metatile, tiles [][]byte) error {
 		})
 		offset += int32(len(tile))
 	}
+
 	if err := encodeHeader(w, ml); err != nil {
-		return nil
+		return fmt.Errorf("metatile/encodeHeader: %v", err)
 	}
+
 	for i := 0; i < len(tiles); i++ {
 		tile := tiles[i]
 
 		if _, err := w.Write(tile); err != nil {
-			return nil
+			return fmt.Errorf("metatile/write: %v", err)
 		}
 	}
+
 	return nil
 }
 
@@ -148,7 +151,7 @@ func GetTile(r io.ReadSeeker, t coords.ZXY) ([]byte, error) {
 	}
 	entry := ml.Index[index]
 	if entry.Size > MaxEntrySize {
-		return nil, fmt.Errorf("entry size > MetatileMaxEntrySize (size: %v)", entry.Size)
+		return nil, fmt.Errorf("entry size > MaxEntrySize (size: %v)", entry.Size)
 	}
 	r.Seek(int64(entry.Offset), 0)
 	buf := make([]byte, entry.Size)

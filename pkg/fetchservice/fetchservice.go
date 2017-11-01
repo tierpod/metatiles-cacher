@@ -77,6 +77,7 @@ func (fs *FetchService) fetchAndWrite(j Job) error {
 
 	err := fs.cw.Write(j.Meta, j.Style, result)
 	if err != nil {
+		fs.logger.Printf("[ERROR] FetchService/fetchAndWrite: %v", err)
 		return fmt.Errorf("FetchService/fetchAndWrite: %v", err)
 	}
 
