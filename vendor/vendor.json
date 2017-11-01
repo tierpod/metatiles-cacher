@@ -7,6 +7,12 @@
 			"path": "github.com/hashicorp/logutils",
 			"revision": "0dc08b1671f34c4250ce212759ebd880f743d883",
 			"revisionTime": "2015-06-09T07:04:31Z"
+		},
+		{
+			"checksumSHA1": "RDJpJQwkF012L6m/2BJizyOksNw=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "eb3733d160e74a9c7e442f435eb3bea458e1d19f",
+			"revisionTime": "2017-08-12T16:00:11Z"
 		}
 	],
 	"rootPath": "github.com/tierpod/metatiles-cacher"
