@@ -5,7 +5,8 @@ reader:
   max_zoom: 17
   min_zoom: 1
   root_dir: /tmp/metatiles-cacher
-  writer_addr: http://localhost:8081/add/
+  user_agent: "User-Agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0";"
+  writer_addr: http://localhost:8081/add
   x_token: 123
 
 writer:
@@ -15,6 +16,7 @@ writer:
   max_zoom: 17
   min_zoom: 1
   root_dir: /tmp/metatiles-cacher
+  user_agent: "User-Agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0";"
   x_token: 123
 
 sources:

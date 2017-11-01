@@ -43,7 +43,7 @@ func main() {
 	}
 
 	// TODO: buffer?
-	fetchservice := fetchservice.NewFetchService(1, filecache, logger)
+	fetchservice := fetchservice.NewFetchService(1, filecache, cfg, logger)
 
 	http.Handle("/add/", handlers.LogConnection(
 		addHandler{

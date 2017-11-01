@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
+	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 	"github.com/tierpod/metatiles-cacher/pkg/queue"
 )
@@ -19,12 +20,13 @@ type FetchService struct {
 	FetchQueue *queue.Uniq
 	logger     *log.Logger
 	cw         cache.Writer
+	cfg        *config.Service
 }
 
 // NewFetchService creates new FetchService and starts background goroutine with infinity loop
 // for reading WriteCh. When job sends to the WriteCh, this goroutine receive it and starts new
 // goroutine for fetching and writing tiles data to disk.
-func NewFetchService(buffer int, cw cache.Writer, logger *log.Logger) *FetchService {
+func NewFetchService(buffer int, cw cache.Writer, cfg *config.Service, logger *log.Logger) *FetchService {
 	fq := queue.NewUniq()
 	//wch := make(chan coords.Metatile, buffer)
 	wch := make(chan Job)
@@ -33,6 +35,7 @@ func NewFetchService(buffer int, cw cache.Writer, logger *log.Logger) *FetchServ
 		FetchQueue: fq,
 		logger:     logger,
 		cw:         cw,
+		cfg:        cfg,
 	}
 
 	logger.Printf("FetchService: Starting background FetchService")
@@ -66,7 +69,7 @@ func (fs *FetchService) fetchAndWrite(j Job) error {
 			zxy = strconv.Itoa(j.Meta.Z) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + ".png"
 			url = strings.Replace(j.Source, "{zxy}", zxy, 1)
 			// fc.logger.Printf("[DEBUG] Filecache/fetchAndWrite: Fetch %v", url)
-			res, err := httpclient.Get(url)
+			res, err := httpclient.Get(url, fs.cfg.Writer.UserAgent)
 			if err != nil {
 				fs.logger.Printf("[ERROR] FetchService/fetchAndWrite: %v", err)
 				return fmt.Errorf("FetchService/fetchAndWrite: %v", err)

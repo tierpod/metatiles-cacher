@@ -1,7 +1,8 @@
 TODO
 ====
 
-- [ ] Do I need json for communication between reader and writer?
+- [x] Do I need json for communication between reader and writer?
+  Json removed, simple GET http request.
 
 - [x] Add vendoring
 
@@ -24,7 +25,7 @@ Expires: Wed, 01 Nov 2017 13:56:54 GMT
 Content-Type: image/png
 ```
 
-- [ ] Add User-Agent option for httpclient?
+- [x] Add User-Agent option for httpclient?
 
 ```
 User-Agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0";

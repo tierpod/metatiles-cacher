@@ -46,6 +46,8 @@ type ReaderSection struct {
 	MinZoom int `yaml:"min_zoom"`
 	// Root directory for cache
 	RootDir string `yaml:"root_dir"`
+	// http client user agent
+	UserAgent string `yaml:"user_agent"`
 	// Writer service address. If "" - do not send request to writer.
 	WriterAddr string `yaml:"writer_addr"`
 	// Token for XToken handler
@@ -60,6 +62,7 @@ type WriterSection struct {
 	MaxZoom     int    `yaml:"max_zoom"`
 	MinZoom     int    `yaml:"min_zoom"`
 	RootDir     string `yaml:"root_dir"`
+	UserAgent   string `yaml:"user_agent"`
 	XToken      string `yaml:"x_token"`
 }
 

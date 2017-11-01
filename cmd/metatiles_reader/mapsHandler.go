@@ -57,7 +57,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	url := strings.Replace(source, "{zxy}", zxy.Path(), 1)
 	h.logger.Printf("Get from source %v", url)
 
-	data, err = httpclient.Get(url)
+	data, err = httpclient.Get(url, h.cfg.Reader.UserAgent)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -70,7 +70,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			h.logger.Printf("Send request to writer: %v, style(%v)", zxy.ConvertToMeta(), style)
 			url := h.cfg.Reader.WriterAddr + "/" + style + "/" + zxy.ConvertToMeta().Path()
-			_, err := httpclient.Get(url)
+			_, err := httpclient.Get(url, h.cfg.Reader.UserAgent)
 			if err != nil {
 				h.logger.Printf("[ERROR] %v\n", err)
 				return

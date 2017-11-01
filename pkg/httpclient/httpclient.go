@@ -9,20 +9,29 @@ import (
 )
 
 // Get gets data by url
-func Get(url string) (data []byte, err error) {
-	res, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("httpclient.Get: %v: %v", url, err)
-	}
-	defer res.Body.Close()
+func Get(url, ua string) (data []byte, err error) {
+	client := &http.Client{}
 
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("httpclient.Get: %v: Response status %v", url, res.StatusCode)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("httpclient/Newrequest: %v", err)
 	}
 
-	data, err = ioutil.ReadAll(res.Body)
+	req.Header.Set("User-Agent", ua)
+
+	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("httpclient.Get: %v", err)
+		return nil, fmt.Errorf("httpclient/Get: %v: %v", url, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("httpclient/Get: %v: Response status %v", url, resp.StatusCode)
+	}
+
+	data, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("httpclient/Get: %v", err)
 	}
 	return data, nil
 }
