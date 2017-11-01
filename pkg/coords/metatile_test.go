@@ -16,15 +16,31 @@ func TestMetatileString(t *testing.T) {
 }
 
 func TestConvertToXYBox(t *testing.T) {
-	m := Metatile{10, [5]int{128, 180, 33, 0, 0}}
-	xybox := m.ConvertToXYBox()
-	result := XYBox{
-		[]int{696, 697, 698, 699, 700, 701, 702, 703},
-		[]int{320, 321, 322, 323, 324, 325, 326, 327},
+	testData := []struct {
+		m      Metatile
+		result XYBox
+	}{
+		{
+			Metatile{10, [5]int{128, 180, 33, 0, 0}},
+			XYBox{
+				[]int{696, 697, 698, 699, 700, 701, 702, 703},
+				[]int{320, 321, 322, 323, 324, 325, 326, 327},
+			},
+		},
+		{
+			Metatile{1, [5]int{0, 0, 0, 0, 0}},
+			XYBox{
+				[]int{0, 1},
+				[]int{0, 1},
+			},
+		},
 	}
 
-	if !reflect.DeepEqual(xybox, result) {
-		t.Errorf("ConvertToXYBox: expected %v, got %v", result, xybox)
+	for _, tt := range testData {
+		xybox := tt.m.ConvertToXYBox()
+		if !reflect.DeepEqual(xybox, tt.result) {
+			t.Errorf("ConvertToXYBox: expected %v, got %v", tt.result, xybox)
+		}
 	}
 }
 
