@@ -5,7 +5,7 @@ reader:
   max_zoom: 17
   min_zoom: 1
   root_dir: /tmp/metatiles-cacher
-  writer_addr: http://localhost:8081/api/add/
+  writer_addr: http://localhost:8081/add/
   x_token: 123
 
 writer:

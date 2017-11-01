@@ -45,7 +45,7 @@ func main() {
 	// TODO: buffer?
 	fetchservice := fetchservice.NewFetchService(1, filecache, logger)
 
-	http.Handle("/api/add/", handlers.LogConnection(
+	http.Handle("/add/", handlers.LogConnection(
 		addHandler{
 			cache:  filecache,
 			fs:     fetchservice,
