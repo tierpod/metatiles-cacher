@@ -52,6 +52,8 @@ type ReaderSection struct {
 	WriterAddr string `yaml:"writer_addr"`
 	// Token for XToken handler
 	XToken string `yaml:"x_token"`
+	// Cache-Control: max-age value in seconds
+	MaxAge int `yaml:"max_age"`
 }
 
 // WriterSection is the "writer" section of configuration.

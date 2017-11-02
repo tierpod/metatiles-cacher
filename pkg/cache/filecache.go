@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/tierpod/metatiles-cacher/pkg/coords"
 	"github.com/tierpod/metatiles-cacher/pkg/metatile"
@@ -30,27 +31,40 @@ func NewFileCacheReader(rootDir string, logger *log.Logger) (*FileCacheReader, e
 	return fc, nil
 }
 
-// Read reads tile data from metatile. Returns found = false and err = nil if metatile not found.
-func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, found bool, err error) {
+// Read reads tile data from metatile.
+func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, err error) {
 	path := r.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
 	r.logger.Printf("[DEBUG] FileCacheReader: Read %v from metatile %v", tile, path)
 
 	file, err := os.Open(path)
 	if os.IsNotExist(err) {
 		r.logger.Printf("[WARN] FileCacheReader: File not found %v", path)
-		return nil, false, nil
+		return nil, nil
 	}
 	if err != nil {
-		return nil, false, fmt.Errorf("FileCacheReader: %v", err)
+		return nil, fmt.Errorf("FileCacheReader: %v", err)
 	}
 	defer file.Close()
 
 	data, err = metatile.GetTile(file, tile)
 	if err != nil {
-		return nil, false, fmt.Errorf("FileCacheReader: %v", err)
+		return nil, fmt.Errorf("FileCacheReader: %v", err)
 	}
 
-	return data, true, nil
+	return data, nil
+}
+
+// Check checks if file in the file cache. If found, return modification time of file.
+func (r *FileCacheReader) Check(tile coords.ZXY, style string) (found bool, mtime time.Time) {
+	path := r.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
+	r.logger.Printf("[DEBUG] FileCacheReader/Check: Search file: %v", path)
+
+	stat, err := os.Stat(path)
+	if !os.IsNotExist(err) {
+		return true, stat.ModTime()
+	}
+
+	return false, time.Time{}
 }
 
 // FileCacheWriter writes multiple tiles to disk in metatile format.

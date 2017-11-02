@@ -1,7 +1,11 @@
 // Package utils contains useful functions.
 package utils
 
-import "math/rand"
+import (
+	"crypto/md5"
+	"fmt"
+	"math/rand"
+)
 
 // MakeIncludedIntRange makes array of integers from min to max, included max value.
 func MakeIncludedIntRange(min, max int) []int {
@@ -30,4 +34,9 @@ func GetRandomString(strings []string) string {
 	}
 
 	return strings[i]
+}
+
+// DigestString returns md5sum of string
+func DigestString(s string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(s)))
 }

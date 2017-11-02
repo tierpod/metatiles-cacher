@@ -12,7 +12,7 @@ TODO
 
 - [x] Simplify config file (move to yaml or toml?)
 
-- [ ] Add headers png tiles (Expires, Cache-Control, ETag?)
+- [x] Add headers png tiles (Expires, Cache-Control, ETag?)
 
 ```
 HTTP/1.1 200 OK

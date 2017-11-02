@@ -50,3 +50,11 @@ func ExampleMakeIncludedIntRange() {
 	// Output:
 	// [1 2 3 4 5 6 7 8 9 10]
 }
+
+func ExampleDigestString() {
+	d := DigestString("teststring")
+	fmt.Printf("%v\n", d)
+
+	// Output:
+	// d67c5cbf5b01c9f91932e3b8def5e5f8
+}

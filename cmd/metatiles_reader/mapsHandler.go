@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/coords"
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
+	"github.com/tierpod/metatiles-cacher/pkg/utils"
 )
 
 type mapsHandler struct {
@@ -41,29 +43,48 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	h.logger.Printf("[DEBUG] Convert URL(%v) to %v, style(%v), format(%v)", r.URL.Path, zxy, style, format)
 
-	data, found, err := h.cache.Read(zxy, style)
-	if err != nil {
-		h.logger.Printf("[ERROR] %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// if found in cache
+	found, mtime := h.cache.Check(zxy, style)
 	if found {
-		mapsReply(w, data)
+		// check Etag
+		etag := `"` + utils.DigestString(mtime.String()) + `"`
+
+		w.Header().Set("Etag", etag)
+		w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Reader.MaxAge))
+
+		if match := r.Header.Get("If-None-Match"); match != "" {
+			if match == etag {
+				h.logger.Printf("[DEBUG] File not modified: ETag(%v) == If-None-Match(%v)", etag, match)
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
+		}
+
+		data, readErr := h.cache.Read(zxy, style)
+		if readErr != nil {
+			h.logger.Printf("[ERROR] %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+		w.Write(data)
 		return
 	}
 
+	// if not found in cache
 	url := strings.Replace(source, "{zxy}", zxy.Path(), 1)
 	h.logger.Printf("Get from source %v", url)
 
-	data, err = httpclient.Get(url, h.cfg.Reader.UserAgent)
+	data, err := httpclient.Get(url, h.cfg.Reader.UserAgent)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	mapsReply(w, data)
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	w.Write(data)
 
 	// Send request to metatiles_writer
 	if h.cfg.Reader.WriterAddr != "" {
@@ -79,10 +100,4 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	return
-}
-
-func mapsReply(w http.ResponseWriter, data []byte) {
-	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-	w.Write(data)
 }
