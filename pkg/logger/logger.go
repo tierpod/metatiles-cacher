@@ -8,13 +8,13 @@ import (
 	"github.com/hashicorp/logutils"
 )
 
-// NewLogger returns new logger with filtered levels:
+// New returns new logger with filtered levels:
 //   {"DEBUG", "WARN", "ERROR", "INFO"}
 //
 // If debug=true, show messages from "DEBUG" level.
 //
 // If datetime=true, show datetime in log message.
-func NewLogger(out io.Writer, debug, datetime bool) *log.Logger {
+func New(out io.Writer, debug, datetime bool) *log.Logger {
 	levels := []logutils.LogLevel{"DEBUG", "WARN", "ERROR", "INFO"}
 
 	var level string

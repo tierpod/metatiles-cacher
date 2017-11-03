@@ -33,21 +33,21 @@ func main() {
 		os.Exit(0)
 	}
 
-	cfg := config.NewConfig(flagConfig)
+	cfg := config.Load(flagConfig)
 
-	logger := logger.NewLogger(os.Stdout, cfg.Writer.LogDebug, cfg.Writer.LogDatetime)
+	logger := logger.New(os.Stdout, cfg.Log.Debug, cfg.Log.Datetime)
 
-	filecache, err := cache.NewFileCacheWriter(cfg.Writer.RootDir, logger)
+	cw, err := cache.NewFileCacheWriter(cfg.FileCache, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	// TODO: buffer?
-	fetchservice := fetchservice.NewFetchService(1, filecache, cfg, logger)
+	fetchservice := fetchservice.NewFetchService(1, cw, cfg, logger)
 
 	http.Handle("/add/", handlers.LogConnection(
 		addHandler{
-			cache:  filecache,
+			cache:  cw,
 			fs:     fetchservice,
 			cfg:    cfg,
 			logger: logger}, logger))

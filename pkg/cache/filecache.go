@@ -7,25 +7,26 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/coords"
 	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 )
 
 // FileCacheReader reads tile data from metatiles stored on the disk.
 type FileCacheReader struct {
-	RootDir string
-	logger  *log.Logger
+	cfg    config.FileCacheSection
+	logger *log.Logger
 }
 
 // NewFileCacheReader creates new FileCacheReader. Return error if rootDir does not exist.
-func NewFileCacheReader(rootDir string, logger *log.Logger) (*FileCacheReader, error) {
-	if _, err := os.Stat(rootDir); os.IsNotExist(err) {
-		return nil, fmt.Errorf("NewFileCacheReader: %v is not exist", rootDir)
+func NewFileCacheReader(cfg config.FileCacheSection, logger *log.Logger) (*FileCacheReader, error) {
+	if _, err := os.Stat(cfg.RootDir); os.IsNotExist(err) {
+		return nil, fmt.Errorf("NewFileCacheReader: %v is not exist", cfg.RootDir)
 	}
 
 	fc := &FileCacheReader{
-		RootDir: rootDir,
-		logger:  logger,
+		cfg:    cfg,
+		logger: logger,
 	}
 
 	return fc, nil
@@ -33,7 +34,7 @@ func NewFileCacheReader(rootDir string, logger *log.Logger) (*FileCacheReader, e
 
 // Read reads tile data from metatile.
 func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, err error) {
-	path := r.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
+	path := r.cfg.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
 	r.logger.Printf("[DEBUG] FileCacheReader: Read %v from metatile %v", tile, path)
 
 	file, err := os.Open(path)
@@ -56,7 +57,7 @@ func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, err 
 
 // Check checks if file in the file cache. If found, return modification time of file.
 func (r *FileCacheReader) Check(tile coords.ZXY, style string) (found bool, mtime time.Time) {
-	path := r.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
+	path := r.cfg.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
 	r.logger.Printf("[DEBUG] FileCacheReader/Check: Search file: %v", path)
 
 	stat, err := os.Stat(path)
@@ -69,24 +70,24 @@ func (r *FileCacheReader) Check(tile coords.ZXY, style string) (found bool, mtim
 
 // FileCacheWriter writes multiple tiles to disk in metatile format.
 type FileCacheWriter struct {
-	RootDir string
-	logger  *log.Logger
+	cfg    config.FileCacheSection
+	logger *log.Logger
 }
 
 // NewFileCacheWriter creates new FileCacheWriter. Return error if can not create rootDir.
-func NewFileCacheWriter(rootDir string, logger *log.Logger) (*FileCacheWriter, error) {
-	if _, err := os.Stat(rootDir); os.IsNotExist(err) {
-		logger.Printf("NewFileCacheWriter: Creating RootDir %v", rootDir)
+func NewFileCacheWriter(cfg config.FileCacheSection, logger *log.Logger) (*FileCacheWriter, error) {
+	if _, err := os.Stat(cfg.RootDir); os.IsNotExist(err) {
+		logger.Printf("NewFileCacheWriter: Creating RootDir %v", cfg.RootDir)
 	}
 
-	err := os.MkdirAll(rootDir, 0777)
+	err := os.MkdirAll(cfg.RootDir, 0777)
 	if err != nil {
 		return nil, fmt.Errorf("NewFileCacheWriter: %v", err)
 	}
 
 	fc := &FileCacheWriter{
-		RootDir: rootDir,
-		logger:  logger,
+		cfg:    cfg,
+		logger: logger,
 	}
 
 	return fc, nil
@@ -94,7 +95,7 @@ func NewFileCacheWriter(rootDir string, logger *log.Logger) (*FileCacheWriter, e
 
 // Write writes metatile data to disk.
 func (w *FileCacheWriter) Write(meta coords.Metatile, style string, data [][]byte) error {
-	path := w.RootDir + "/" + style + "/" + meta.Path()
+	path := w.cfg.RootDir + "/" + style + "/" + meta.Path()
 	w.logger.Printf("FileCacheWriter: write %v", path)
 
 	err := os.MkdirAll(filepath.Dir(path), 0777)

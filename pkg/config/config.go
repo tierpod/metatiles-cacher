@@ -11,18 +11,15 @@ import (
 // Service is the root of configuration.
 type Service struct {
 	// metatiles_reader configuration
-	ReaderSection ReaderSection `yaml:"reader"`
+	Reader ReaderSection `yaml:"reader"`
 	// metatiles_writer configuration
-	WriterSection WriterSection `yaml:"writer"`
+	Writer WriterSection `yaml:"writer"`
 	// sources for reader and writer
-	ZoomSection       ZoomSection       `yaml:"zoom"`
-	LogSection        LogSection        `yaml:"log"`
-	FileCacheSection  FileCacheSection  `yaml:"filecache"`
-	HTTPClientSection HTTPClientSection `yaml:"httpclient"`
-	SourcesSection    SourcesSection    `yaml:"sources"`
-	//Sources []Source `yaml:"sources"`
-	// sources for reader and writer (in map)
-	//SourcesMap map[string]string
+	Zoom       ZoomSection       `yaml:"zoom"`
+	Log        LogSection        `yaml:"log"`
+	FileCache  FileCacheSection  `yaml:"filecache"`
+	HTTPClient HTTPClientSection `yaml:"httpclient"`
+	Sources    SourcesSection    `yaml:"sources"`
 }
 
 // ReaderSection is the "reader" section of configuration.

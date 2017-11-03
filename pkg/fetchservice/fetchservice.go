@@ -69,7 +69,7 @@ func (fs *FetchService) fetchAndWrite(j Job) error {
 			zxy = strconv.Itoa(j.Meta.Z) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + ".png"
 			url = strings.Replace(j.Source, "{zxy}", zxy, 1)
 			// fc.logger.Printf("[DEBUG] Filecache/fetchAndWrite: Fetch %v", url)
-			res, err := httpclient.Get(url, fs.cfg.Writer.UserAgent)
+			res, err := httpclient.Get(url, fs.cfg.HTTPClient.UserAgent)
 			if err != nil {
 				fs.logger.Printf("[ERROR] FetchService/fetchAndWrite: %v", err)
 				return fmt.Errorf("FetchService/fetchAndWrite: %v", err)

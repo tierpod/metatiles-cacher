@@ -34,11 +34,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	cfg := config.NewConfig(flagConfig)
+	cfg := config.Load(flagConfig)
 
-	logger := logger.NewLogger(os.Stdout, cfg.Reader.LogDebug, cfg.Reader.LogDatetime)
+	logger := logger.New(os.Stdout, cfg.Log.Debug, cfg.Log.Datetime)
 
-	filecache, err := cache.NewFileCacheReader(cfg.Reader.RootDir, logger)
+	cr, err := cache.NewFileCacheReader(cfg.FileCache, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func main() {
 	http.Handle("/maps/", handlers.LogConnection(
 		mapsHandler{
 			logger: logger,
-			cache:  filecache,
+			cache:  cr,
 			cfg:    cfg,
 		}, logger))
 

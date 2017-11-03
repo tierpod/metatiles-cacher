@@ -28,13 +28,13 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if zxy.Z < h.cfg.Reader.MinZoom || zxy.Z > h.cfg.Reader.MaxZoom {
+	if zxy.Z < h.cfg.Zoom.Min || zxy.Z > h.cfg.Zoom.Max {
 		h.logger.Printf("[ERROR] Wrong zoom level: Z(%v)", zxy.Z)
 		http.Error(w, "Wrong zoom level", http.StatusNotFound)
 		return
 	}
 
-	source, found := h.cfg.SourcesMap[style]
+	source, found := h.cfg.Sources.Sources[style]
 	if !found {
 		h.logger.Printf("[ERROR] Style not found in sources: %v", style)
 		http.Error(w, "Style not found in sources", http.StatusNotFound)
@@ -76,7 +76,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	url := strings.Replace(source, "{zxy}", zxy.Path(), 1)
 	h.logger.Printf("Get from source %v", url)
 
-	data, err := httpclient.Get(url, h.cfg.Reader.UserAgent)
+	data, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -91,7 +91,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			h.logger.Printf("Send request to writer: %v, style(%v)", zxy.ConvertToMeta(), style)
 			url := h.cfg.Reader.WriterAddr + "/" + style + "/" + zxy.ConvertToMeta().Path()
-			_, err := httpclient.Get(url, h.cfg.Reader.UserAgent)
+			_, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
 			if err != nil {
 				h.logger.Printf("[ERROR] %v\n", err)
 				return
