@@ -1,12 +1,6 @@
 package config
 
-import (
-	"fmt"
-	"reflect"
-	"testing"
-)
-
-func TestSourceInfo(t *testing.T) {
+/*func TestSourceInfo(t *testing.T) {
 	source1 := Source{Name: "style1", URL: "http://test1/style1/%v"}
 	source2 := Source{Name: "style2", URL: "http://test2/style2/%v"}
 	service := Service{Sources: []Source{source1, source2}}
@@ -42,4 +36,4 @@ func TestSourcesToMap(t *testing.T) {
 	if !reflect.DeepEqual(got, result) {
 		t.Errorf("SourcesToMap: expected %v, got %v", result, got)
 	}
-}
+}*/

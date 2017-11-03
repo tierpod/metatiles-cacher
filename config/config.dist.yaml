@@ -1,28 +1,29 @@
 reader:
   bind: localhost:8080
-  log_datetime: true
-  log_debug: true
-  max_zoom: 17
-  min_zoom: 1
-  root_dir: /tmp/metatiles-cacher
-  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
+  use_writer: true # send requests to writer?
+  use_sources: true # send requests to remote sources?
   writer_addr: http://localhost:8081/add
+  max_age: 86400  # Cache-Control: max-age
   x_token: 123
-  max_age: 86400
 
 writer:
   bind: localhost:8081
-  log_datetime: true
-  log_debug: true
-  max_zoom: 17
-  min_zoom: 1
-  root_dir: /tmp/metatiles-cacher
-  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
   x_token: 123
 
-sources:
-  - name: example
-    url: http://example/style/{zxy}
+zoom:
+  min: 1
+  max: 17
 
-  - name: test
-    url: http://test/{zxy}?api_key=123
+log:
+  datetime: true
+  debug: true
+
+filecache:
+  root_dir: /tmp/metatiles-cacher
+
+httpclient:
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
+
+sources:
+  example: http://example/style/{zxy}
+  test: http://test/{zxy}?api_key=123
