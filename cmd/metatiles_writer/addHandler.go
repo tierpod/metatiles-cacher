@@ -32,7 +32,7 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	source, found := h.cfg.Sources.Sources[style]
+	source, found := h.cfg.Sources.Map[style]
 	if !found {
 		h.logger.Printf("[ERROR] Style not found in sources: %v", style)
 		http.Error(w, "Style not found in sources", http.StatusNotFound)

@@ -2,19 +2,16 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 
 	"gopkg.in/yaml.v2"
 )
 
 // Service is the root of configuration.
 type Service struct {
-	// metatiles_reader configuration
-	Reader ReaderSection `yaml:"reader"`
-	// metatiles_writer configuration
-	Writer WriterSection `yaml:"writer"`
-	// sources for reader and writer
+	Reader     ReaderSection     `yaml:"reader"`
+	Writer     WriterSection     `yaml:"writer"`
 	Zoom       ZoomSection       `yaml:"zoom"`
 	Log        LogSection        `yaml:"log"`
 	FileCache  FileCacheSection  `yaml:"filecache"`
@@ -22,7 +19,7 @@ type Service struct {
 	Sources    SourcesSection    `yaml:"sources"`
 }
 
-// ReaderSection is the "reader" section of configuration.
+// ReaderSection contains Reader service configuration.
 type ReaderSection struct {
 	// Bind to address
 	Bind string `yaml:"bind"`
@@ -38,34 +35,40 @@ type ReaderSection struct {
 	MaxAge int `yaml:"max_age"`
 }
 
-// WriterSection is the "writer" section of configuration.
+// WriterSection contains Writer service configuration.
 type WriterSection struct {
 	Bind   string `yaml:"bind"`
 	XToken string `yaml:"x_token"`
 }
 
+// ZoomSection contains min and max zoom levels.
 type ZoomSection struct {
 	Min int `yaml:"min"`
 	Max int `yaml:"max"`
 }
 
+// LogSection contains logger configuration.
 type LogSection struct {
 	Datetime bool `yaml:"datetime"`
 	Debug    bool `yaml:"debug"`
 }
 
+// FileCacheSection contains file cache configuration.
 type FileCacheSection struct {
 	RootDir string `yaml:"root_dir"`
 }
 
+// HTTPClientSection contains http client configuration.
 type HTTPClientSection struct {
 	UserAgent string `yaml:"user_agent"`
 }
 
+// SourcesSection contains map of sources: key is name, value is url.
 type SourcesSection struct {
-	Sources map[string]string
+	Map map[string]string
 }
 
+// UnmarshalYAML reads sources to Map["name"] = "url"
 func (s *SourcesSection) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var url, source string
 	var values yaml.MapSlice
@@ -83,23 +86,23 @@ func (s *SourcesSection) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		m[url] = source
 	}
 
-	s.Sources = m
+	s.Map = m
 	return nil
 }
 
 // Load loads yaml file and creates new service configuration.
-func Load(path string) *Service {
+func Load(path string) (*Service, error) {
 	var c Service
 
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("read config: %v", err)
 	}
 
 	err = yaml.Unmarshal(data, &c)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("unmarshal config: %v", err)
 	}
 
-	return &c
+	return &c, nil
 }

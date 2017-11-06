@@ -5,6 +5,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -34,7 +35,10 @@ func main() {
 		os.Exit(0)
 	}
 
-	cfg := config.Load(flagConfig)
+	cfg, err := config.Load(flagConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	logger := logger.New(os.Stdout, cfg.Log.Debug, cfg.Log.Datetime)
 
