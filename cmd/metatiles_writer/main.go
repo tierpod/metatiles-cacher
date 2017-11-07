@@ -55,7 +55,11 @@ func main() {
 			cfg:    cfg,
 			logger: logger}, logger))
 	http.Handle("/status", handlers.LogConnection(
-		handlers.XToken(statusHandler{}, cfg.Writer.XToken, logger),
+		handlers.XToken(
+			statusHandler{
+				queue:  uq,
+				logger: logger,
+			}, cfg.Writer.XToken, logger),
 		logger))
 
 	logger.Printf("Starting web server on %v", cfg.Writer.Bind)

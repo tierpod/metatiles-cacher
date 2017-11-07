@@ -49,7 +49,7 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Printf("[DEBUG] Already in queue, skip: %v", meta)
+	h.logger.Printf("[DEBUG] Already in queue, skip: %v", q)
 	return
 }
 
