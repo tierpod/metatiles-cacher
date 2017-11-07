@@ -68,12 +68,10 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, zxy coords.ZXY, style
 	w.Header().Set("Etag", etag)
 	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Reader.MaxAge))
 
-	if match := ifNoneMatch; match != "" {
-		if match == etag {
-			h.logger.Printf("[DEBUG] File not modified: Etag(%v) == If-None-Match(%v)", etag, match)
-			w.WriteHeader(http.StatusNotModified)
-			return
-		}
+	if ifNoneMatch == etag {
+		h.logger.Printf("[DEBUG] File not modified: Etag(%v) == If-None-Match(%v)", etag, ifNoneMatch)
+		w.WriteHeader(http.StatusNotModified)
+		return
 	}
 
 	data, err := h.cache.Read(zxy, style)
