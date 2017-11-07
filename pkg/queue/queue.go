@@ -49,7 +49,7 @@ func (q *Uniq) Len() int {
 // Items returns slice of keys storing in map.
 func (q *Uniq) Items() []string {
 	q.mx.RLock()
-	defer q.mx.RLocker()
+	defer q.mx.RUnlock()
 
 	var result []string
 	for k := range q.m {
