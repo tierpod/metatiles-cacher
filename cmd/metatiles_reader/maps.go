@@ -104,12 +104,14 @@ func (h mapsHandler) replyFromSource(w http.ResponseWriter, zxy coords.ZXY, sour
 }
 
 func (h mapsHandler) sendToWriter(w http.ResponseWriter, zxy coords.ZXY, style string) {
-	url := h.cfg.Reader.WriterAddr + "/" + style + "/" + zxy.ConvertToMeta().Path()
+	url := h.cfg.Reader.WriterAddr
+	url = strings.Replace(url, "{style}", style, 1)
+	url = strings.Replace(url, "{metatile}", zxy.ConvertToMeta().Path(), 1)
 	h.logger.Printf("Send request to writer: %v", url)
 
 	_, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
 	if err != nil {
-		h.logger.Printf("[ERROR] %v\n", err)
+		h.logger.Printf("[ERROR] %v", err)
 		return
 	}
 
