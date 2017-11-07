@@ -46,61 +46,73 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	found, mtime := h.cache.Check(zxy, style)
 	// found in cache
 	if found {
-		// check Etag
 		etag := `"` + utils.DigestString(mtime.String()) + `"`
-
-		w.Header().Set("Etag", etag)
-		w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Reader.MaxAge))
-
-		if match := r.Header.Get("If-None-Match"); match != "" {
-			if match == etag {
-				h.logger.Printf("[DEBUG] File not modified: Etag(%v) == If-None-Match(%v)", etag, match)
-				w.WriteHeader(http.StatusNotModified)
-				return
-			}
-		}
-
-		data, readErr := h.cache.Read(zxy, style)
-		if readErr != nil {
-			h.logger.Printf("[ERROR] %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "image/png")
-		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-		w.Write(data)
+		h.replyFromCache(w, zxy, style, etag, r.Header.Get("If-None-Match"))
 		return
 	}
 
 	// not found in cache
+	if h.cfg.Reader.UseSources {
+		h.replyFromSource(w, zxy, source)
+	}
+
+	// send request to writer
+	if h.cfg.Reader.UseWriter {
+		go h.sendToWriter(w, zxy, style)
+	}
+
+	return
+}
+
+func (h mapsHandler) replyFromCache(w http.ResponseWriter, zxy coords.ZXY, style string, etag, ifNoneMatch string) {
+	w.Header().Set("Etag", etag)
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Reader.MaxAge))
+
+	if match := ifNoneMatch; match != "" {
+		if match == etag {
+			h.logger.Printf("[DEBUG] File not modified: Etag(%v) == If-None-Match(%v)", etag, match)
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+	}
+
+	data, err := h.cache.Read(zxy, style)
+	if err != nil {
+		h.logger.Printf("[ERROR] %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	w.Write(data)
+	return
+}
+
+func (h mapsHandler) replyFromSource(w http.ResponseWriter, zxy coords.ZXY, source string) {
 	url := strings.Replace(source, "{zxy}", zxy.Path(), 1)
 	h.logger.Printf("Get from source %v", url)
 
-	// get tile from remote source and reply to client
-	if h.cfg.Reader.UseSources {
-		data, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
-		if err != nil {
-			h.logger.Printf("[ERROR] %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "image/png")
-		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-		w.Write(data)
+	data, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
+	if err != nil {
+		h.logger.Printf("[ERROR] %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	w.Write(data)
+	return
+}
 
-	// send writer request to metatiles_writer
-	if h.cfg.Reader.UseWriter {
-		go func() {
-			url := h.cfg.Reader.WriterAddr + "/" + style + "/" + zxy.ConvertToMeta().Path()
-			h.logger.Printf("Send request to writer: %v", url)
-			_, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
-			if err != nil {
-				h.logger.Printf("[ERROR] %v\n", err)
-				return
-			}
-		}()
+func (h mapsHandler) sendToWriter(w http.ResponseWriter, zxy coords.ZXY, style string) {
+	url := h.cfg.Reader.WriterAddr + "/" + style + "/" + zxy.ConvertToMeta().Path()
+	h.logger.Printf("Send request to writer: %v", url)
+
+	_, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
+	if err != nil {
+		h.logger.Printf("[ERROR] %v\n", err)
+		return
 	}
 
 	return
