@@ -21,7 +21,7 @@ func Get(url, ua string) (data []byte, err error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("httpclient/Get: %v: %v", url, err)
+		return nil, fmt.Errorf("httpclient/Get: %v", err)
 	}
 	defer resp.Body.Close()
 
