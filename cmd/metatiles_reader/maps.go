@@ -11,7 +11,7 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/coords"
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
-	"github.com/tierpod/metatiles-cacher/pkg/utils"
+	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
 type mapsHandler struct {
@@ -46,7 +46,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	found, mtime := h.cache.Check(zxy, style)
 	// found in cache
 	if found {
-		etag := `"` + utils.DigestString(mtime.String()) + `"`
+		etag := `"` + util.DigestString(mtime.String()) + `"`
 		h.replyFromCache(w, zxy, style, etag, r.Header.Get("If-None-Match"))
 		return
 	}

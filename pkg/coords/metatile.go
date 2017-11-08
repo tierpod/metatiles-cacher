@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tierpod/metatiles-cacher/pkg/utils"
+	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
 // MaxMetatileSize is the maximum metatile size. Usually, metatile contains 8 * 8 tiles.
@@ -38,8 +38,8 @@ func (m Metatile) Size() int {
 func (m Metatile) ConvertToXYBox() XYBox {
 	size := m.Size()
 	xMin, yMin := metaToXY(m.Hashes)
-	x := utils.MakeIntRange(xMin, xMin+size)
-	y := utils.MakeIntRange(yMin, yMin+size)
+	x := util.MakeIntSlice(xMin, xMin+size)
+	y := util.MakeIntSlice(yMin, yMin+size)
 	return XYBox{x, y}
 }
 

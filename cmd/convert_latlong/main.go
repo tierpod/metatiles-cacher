@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/tierpod/metatiles-cacher/pkg/coords"
-	"github.com/tierpod/metatiles-cacher/pkg/utils"
+	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
 const defaultPrefix = "/var/lib/mod_tile/style/"
@@ -129,7 +129,7 @@ func main() {
 
 	top := coords.LatLong{Lat: flagLat.max, Long: flagLong.min}
 	bottom := coords.LatLong{Lat: flagLat.min, Long: flagLong.max}
-	zooms := utils.MakeIncludedIntRange(flagZooms.min, flagZooms.max)
+	zooms := util.MakeIntSlice(flagZooms.min, flagZooms.max+1)
 
 	tiles := coords.NewBBoxFromLatLong(zooms, top, bottom)
 
