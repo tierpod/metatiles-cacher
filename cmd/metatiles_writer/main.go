@@ -11,7 +11,7 @@ import (
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
-	"github.com/tierpod/metatiles-cacher/pkg/handlers"
+	"github.com/tierpod/metatiles-cacher/pkg/handler"
 	"github.com/tierpod/metatiles-cacher/pkg/logger"
 	"github.com/tierpod/metatiles-cacher/pkg/queue"
 )
@@ -48,14 +48,14 @@ func main() {
 
 	uq := queue.NewUniq()
 
-	http.Handle("/add/", handlers.LogConnection(
+	http.Handle("/add/", handler.LogConnection(
 		addHandler{
 			cache:  cw,
 			queue:  uq,
 			cfg:    cfg,
 			logger: logger}, logger))
-	http.Handle("/status", handlers.LogConnection(
-		handlers.XToken(
+	http.Handle("/status", handler.LogConnection(
+		handler.XToken(
 			statusHandler{
 				queue:  uq,
 				logger: logger,

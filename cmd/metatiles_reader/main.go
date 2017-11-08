@@ -13,7 +13,7 @@ import (
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
-	"github.com/tierpod/metatiles-cacher/pkg/handlers"
+	"github.com/tierpod/metatiles-cacher/pkg/handler"
 	"github.com/tierpod/metatiles-cacher/pkg/logger"
 )
 
@@ -47,15 +47,15 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	http.Handle("/status", handlers.LogConnection(
-		handlers.XToken(
+	http.Handle("/status", handler.LogConnection(
+		handler.XToken(
 			statusHandler{}, cfg.Reader.XToken, logger,
 		),
 		logger))
-	http.Handle("/static/", handlers.LogConnection(
+	http.Handle("/static/", handler.LogConnection(
 		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))), logger),
 	)
-	http.Handle("/maps/", handlers.LogConnection(
+	http.Handle("/maps/", handler.LogConnection(
 		mapsHandler{
 			logger: logger,
 			cache:  cr,
