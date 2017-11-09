@@ -33,9 +33,9 @@ func NewFileCacheReader(cfg config.FileCacheSection, logger *log.Logger) (*FileC
 }
 
 // Read reads tile data from metatile.
-func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, err error) {
-	path := r.cfg.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
-	r.logger.Printf("[DEBUG] FileCacheReader: read %v from metatile %v", tile, path)
+func (r *FileCacheReader) Read(t coords.Tile, style string) (data []byte, err error) {
+	path := r.cfg.RootDir + "/" + style + "/" + t.ToMetatile().Path()
+	r.logger.Printf("[DEBUG] FileCacheReader: read %v from metatile %v", t, path)
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -43,7 +43,7 @@ func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, err 
 	}
 	defer file.Close()
 
-	data, err = metatile.GetTile(file, tile)
+	data, err = metatile.GetTile(file, t)
 	if err != nil {
 		return nil, fmt.Errorf("FileCacheReader: %v", err)
 	}
@@ -52,8 +52,8 @@ func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, err 
 }
 
 // Check checks if file in the file cache. If found, return modification time of file.
-func (r *FileCacheReader) Check(tile coords.ZXY, style string) (found bool, mtime time.Time) {
-	path := r.cfg.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
+func (r *FileCacheReader) Check(t coords.Tile, style string) (found bool, mtime time.Time) {
+	path := r.cfg.RootDir + "/" + style + "/" + t.ToMetatile().Path()
 	r.logger.Printf("[DEBUG] FileCacheReader/Check: Search file: %v", path)
 
 	stat, err := os.Stat(path)
@@ -90,8 +90,8 @@ func NewFileCacheWriter(cfg config.FileCacheSection, logger *log.Logger) (*FileC
 }
 
 // Write writes metatile data to disk.
-func (w *FileCacheWriter) Write(meta coords.Metatile, style string, data [][]byte) error {
-	path := w.cfg.RootDir + "/" + style + "/" + meta.Path()
+func (w *FileCacheWriter) Write(m coords.Metatile, style string, data [][]byte) error {
+	path := w.cfg.RootDir + "/" + style + "/" + m.Path()
 	w.logger.Printf("FileCacheWriter: write %v", path)
 
 	err := os.MkdirAll(filepath.Dir(path), 0777)
@@ -105,7 +105,7 @@ func (w *FileCacheWriter) Write(meta coords.Metatile, style string, data [][]byt
 	}
 	defer file.Close()
 
-	err = metatile.Encode(file, meta, data)
+	err = metatile.Encode(file, m, data)
 	if err != nil {
 		return fmt.Errorf("FileCacheWriter: %v", err)
 	}

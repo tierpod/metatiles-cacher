@@ -8,14 +8,14 @@ import (
 
 func TestMetatileString(t *testing.T) {
 	m := Metatile{10, [5]int{128, 180, 33, 0, 0}}
-	result := "Metatile{Z:10 Hashes:[128 180 33 0 0]}"
+	result := "Metatile{Zoom:10 Hashes:[128 180 33 0 0]}"
 
 	if m.String() != result {
-		t.Errorf("Metatile String(): expected %v, got %v", result, m.String())
+		t.Errorf("Metatile.String(): expected %v, got %v", result, m.String())
 	}
 }
 
-func TestConvertToXYBox(t *testing.T) {
+func TestToXYBox(t *testing.T) {
 	testData := []struct {
 		m      Metatile
 		result XYBox
@@ -37,9 +37,9 @@ func TestConvertToXYBox(t *testing.T) {
 	}
 
 	for _, tt := range testData {
-		xybox := tt.m.ConvertToXYBox()
+		xybox := tt.m.ToXYBox()
 		if !reflect.DeepEqual(xybox, tt.result) {
-			t.Errorf("ConvertToXYBox: expected %v, got %v", tt.result, xybox)
+			t.Errorf("ToXYBox: expected %v, got %v", tt.result, xybox)
 		}
 	}
 }
@@ -58,70 +58,70 @@ func TestMetatileSize(t *testing.T) {
 	for _, tt := range testData {
 		s := metatileSize(tt.size)
 		if s != tt.result {
-			t.Errorf("ZXY metatileSize: expected %v, got %v", tt.result, s)
+			t.Errorf("metatileSize: expected %v, got %v", tt.result, s)
 		}
 	}
 }
 
-func BenchmarkMetatilePath1000(b *testing.B) {
+func BenchmarkMetatilePath(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		m := Metatile{Z: 1, Hashes: [5]int{0, 0, 0, 0, 128}}
+		m := Metatile{Zoom: 1, Hashes: [5]int{0, 0, 0, 0, 128}}
 		m.Path()
 	}
 }
 
 func TestMetatileMinXY(t *testing.T) {
 	testData := []struct {
-		meta Metatile
+		m    Metatile
 		x, y int
 	}{
 		{
-			Metatile{Z: 1, Hashes: [5]int{0, 0, 0, 0, 0}},
+			Metatile{Zoom: 1, Hashes: [5]int{0, 0, 0, 0, 0}},
 			0, 0,
 		},
 		{
-			Metatile{Z: 10, Hashes: [5]int{128, 180, 33, 0, 0}},
+			Metatile{Zoom: 10, Hashes: [5]int{128, 180, 33, 0, 0}},
 			696, 320,
 		},
 		{
-			Metatile{Z: 17, Hashes: [5]int{128, 236, 192, 90, 16}},
+			Metatile{Zoom: 17, Hashes: [5]int{128, 236, 192, 90, 16}},
 			89320, 41152,
 		},
 	}
 
 	for _, tt := range testData {
-		x, y := tt.meta.MinXY()
+		x, y := tt.m.MinXY()
 		if x != tt.x || y != tt.y {
-			t.Errorf("MinMetaXY: expected {X:%v Y:%v}, got {X:%v Y:%v}", tt.x, tt.y, x, y)
+			t.Errorf("Metatile.MinXY: expected {X:%v Y:%v}, got {X:%v Y:%v}", tt.x, tt.y, x, y)
 		}
 	}
 }
 
-func TestNewMetaFromURL(t *testing.T) {
+func TestNewMetatileFromURL(t *testing.T) {
 	testData := []struct {
 		url   string
 		style string
-		meta  Metatile
+		m     Metatile
 	}{
 		{
-			"/metatile/path/style/10/128/0/0/0/0.meta",
+			"/mtile/path/style/10/128/0/0/0/0.meta",
 			"style",
-			Metatile{Z: 10, Hashes: [5]int{0, 0, 0, 0, 128}},
+			Metatile{Zoom: 10, Hashes: [5]int{0, 0, 0, 0, 128}},
 		},
 		{
 			"/style/10/128/0/0/0/33.meta",
 			"style",
-			Metatile{Z: 10, Hashes: [5]int{33, 0, 0, 0, 128}},
+			Metatile{Zoom: 10, Hashes: [5]int{33, 0, 0, 0, 128}},
 		},
 		{
-			"http://localhost/test/add/style/12/128/0/128/0/33.meta",
+			"http://localhost/test/add/style/12/128/0/128/0/33.m",
 			"style",
-			Metatile{Z: 12, Hashes: [5]int{33, 0, 128, 0, 128}},
+			Metatile{Zoom: 12, Hashes: [5]int{33, 0, 128, 0, 128}},
 		},
 	}
 
 	for _, tt := range testData {
-		meta, style, err := NewMetaFromURL(tt.url)
+		m, style, err := NewMetatileFromURL(tt.url)
 		if err != nil {
 			t.Errorf("Got error: %v", err)
 		}
@@ -130,8 +130,8 @@ func TestNewMetaFromURL(t *testing.T) {
 			t.Errorf("Expected format %v, got %v", tt.style, style)
 		}
 
-		if !reflect.DeepEqual(meta, tt.meta) {
-			t.Errorf("Expected %v, got %v", tt.meta, meta)
+		if !reflect.DeepEqual(m, tt.m) {
+			t.Errorf("Expected %v, got %v", tt.m, m)
 		}
 	}
 
@@ -140,66 +140,66 @@ func TestNewMetaFromURL(t *testing.T) {
 		errStr string
 	}{
 		{
-			"/maps/",
-			"NewMetaFromURL: Wrong url items length: expected 7, got /maps/",
+			"/maps",
+			"NewMetatileFromURL: wrong url items length: /maps (2/7)",
 		},
 		{
 			"/maps/style/z/4/3/2/1/0.meta",
-			"NewMetaFromURL: Z: strconv.Atoi: parsing \"z\": invalid syntax",
+			"NewMetatileFromURL: Zoom: strconv.Atoi: parsing \"z\": invalid syntax",
 		},
 		{
 			"/maps/style/10/h4/3/2/1/0.meta",
-			"NewMetaFromURL: h4: strconv.Atoi: parsing \"h4\": invalid syntax",
+			"NewMetatileFromURL: h4: strconv.Atoi: parsing \"h4\": invalid syntax",
 		},
 		{
 			"/maps/style/10/4/h3/2/1/0.meta",
-			"NewMetaFromURL: h3: strconv.Atoi: parsing \"h3\": invalid syntax",
+			"NewMetatileFromURL: h3: strconv.Atoi: parsing \"h3\": invalid syntax",
 		},
 		{
 			"/maps/style/10/4/3/h2/1/0.meta",
-			"NewMetaFromURL: h2: strconv.Atoi: parsing \"h2\": invalid syntax",
+			"NewMetatileFromURL: h2: strconv.Atoi: parsing \"h2\": invalid syntax",
 		},
 		{
 			"/maps/style/10/4/3/2/h1/0.meta",
-			"NewMetaFromURL: h1: strconv.Atoi: parsing \"h1\": invalid syntax",
+			"NewMetatileFromURL: h1: strconv.Atoi: parsing \"h1\": invalid syntax",
 		},
 		{
 			"/maps/style/10/4/3/2/1/h0.meta",
-			"NewMetaFromURL: h0: strconv.Atoi: parsing \"h0\": invalid syntax",
+			"NewMetatileFromURL: h0: strconv.Atoi: parsing \"h0\": invalid syntax",
 		},
 		{
 			"/maps/style/10/4/3/2/1/h0",
-			"NewMetaFromURL: Wrong last item: h0",
+			"NewMetatileFromURL: wrong last item: h0",
 		},
 	}
 
 	for _, tt := range testDataErr {
-		_, _, err := NewMetaFromURL(tt.url)
+		_, _, err := NewMetatileFromURL(tt.url)
 		if err.Error() != tt.errStr {
 			t.Errorf("Expected error: %v, got: %v", tt.errStr, err)
 		}
 	}
 }
 
-func BenchmarkNewMetaFromURL(b *testing.B) {
+func BenchmarkNewMetatileFromURL(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		NewMetaFromURL("/maps/style/10/0/1/2/3/4.meta")
+		NewMetatileFromURL("/maps/style/10/0/1/2/3/4.meta")
 	}
 }
 
 func ExampleMetatile_Path() {
-	meta := Metatile{Z: 1, Hashes: [5]int{2, 3, 4, 5, 6}}
+	m := Metatile{Zoom: 10, Hashes: [5]int{2, 3, 4, 5, 6}}
 
-	fmt.Printf("%v\n", meta.Path())
+	fmt.Printf("%v\n", m.Path())
 
 	// Output:
-	// 1/6/5/4/3/2.meta
+	// 10/6/5/4/3/2.meta
 }
 
-func ExampleNewMetaFromURL() {
-	meta, style, _ := NewMetaFromURL("/metatile/path/style/10/128/0/0/0/0.meta")
-	fmt.Printf("%v %v\n", meta, style)
+func ExampleNewMetatileFromURL() {
+	m, style, _ := NewMetatileFromURL("/mtile/path/style/10/128/0/0/0/0.meta")
+	fmt.Printf("%v %v\n", m, style)
 
 	// Output:
-	// Metatile{Z:10 Hashes:[0 0 0 0 128]} style
+	// Metatile{Zoom:10 Hashes:[0 0 0 0 128]} style
 }

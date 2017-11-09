@@ -56,15 +56,15 @@ func encodeHeader(w io.Writer, ml *metaLayout) error {
 }
 
 // Encode encodes tiles to metatile and writes it to w.
-func Encode(w io.Writer, meta coords.Metatile, tiles [][]byte) error {
+func Encode(w io.Writer, m coords.Metatile, tiles [][]byte) error {
 	// f.write(struct.pack("4s4i", META_MAGIC, METATILE * METATILE, x, y, z))
-	x, y := meta.MinXY()
+	x, y := m.MinXY()
 	ml := &metaLayout{
 		Magic: []byte{'M', 'E', 'T', 'A'},
 		Count: int32(len(tiles)),
 		X:     int32(x),
 		Y:     int32(y),
-		Z:     int32(meta.Z),
+		Z:     int32(m.Zoom),
 	}
 	// golang        |renderd.py
 	// 20            |len(META_MAGIC) + 4 * 4
@@ -139,7 +139,7 @@ func decodeHeader(r io.Reader) (*metaLayout, error) {
 }
 
 // GetTile decodes metatile from r and extract tile data.
-func GetTile(r io.ReadSeeker, t coords.ZXY) ([]byte, error) {
+func GetTile(r io.ReadSeeker, t coords.Tile) ([]byte, error) {
 	ml, err := decodeHeader(r)
 	if err != nil {
 		return nil, err

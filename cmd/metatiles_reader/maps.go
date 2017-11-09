@@ -21,15 +21,15 @@ type mapsHandler struct {
 }
 
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	zxy, style, format, err := coords.NewZXYFromURL(r.URL.Path)
+	t, style, format, err := coords.NewTileFromURL(r.URL.Path)
 	if err != nil {
 		h.logger.Printf("[ERROR] Wrong request: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if zxy.Z < h.cfg.Zoom.Min || zxy.Z > h.cfg.Zoom.Max {
-		h.logger.Printf("[ERROR] Wrong zoom level: Z(%v)", zxy.Z)
+	if t.Zoom < h.cfg.Zoom.Min || t.Zoom > h.cfg.Zoom.Max {
+		h.logger.Printf("[ERROR] Wrong zoom level: Zoom(%v)", t.Zoom)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -41,30 +41,30 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Printf("[DEBUG] Got request %v style(%v), format(%v)", zxy, style, format)
+	h.logger.Printf("[DEBUG] Got request %v style(%v), format(%v)", t, style, format)
 
-	found, mtime := h.cache.Check(zxy, style)
+	found, mtime := h.cache.Check(t, style)
 	// found in cache
 	if found {
 		etag := `"` + util.DigestString(mtime.String()) + `"`
-		h.replyFromCache(w, zxy, style, etag, r.Header.Get("If-None-Match"))
+		h.replyFromCache(w, t, style, etag, r.Header.Get("If-None-Match"))
 		return
 	}
 
 	// not found in cache
 	if h.cfg.Reader.UseSources {
-		h.replyFromSource(w, zxy, source)
+		h.replyFromSource(w, t, source)
 	}
 
 	// send request to writer
 	if h.cfg.Reader.UseWriter {
-		go h.sendToWriter(w, zxy, style)
+		go h.sendToWriter(w, t, style)
 	}
 
 	return
 }
 
-func (h mapsHandler) replyFromCache(w http.ResponseWriter, zxy coords.ZXY, style string, etag, ifNoneMatch string) {
+func (h mapsHandler) replyFromCache(w http.ResponseWriter, t coords.Tile, style string, etag, ifNoneMatch string) {
 	w.Header().Set("Etag", etag)
 	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Reader.MaxAge))
 
@@ -74,7 +74,7 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, zxy coords.ZXY, style
 		return
 	}
 
-	data, err := h.cache.Read(zxy, style)
+	data, err := h.cache.Read(t, style)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -87,8 +87,8 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, zxy coords.ZXY, style
 	return
 }
 
-func (h mapsHandler) replyFromSource(w http.ResponseWriter, zxy coords.ZXY, source string) {
-	url := strings.Replace(source, "{zxy}", zxy.Path(), 1)
+func (h mapsHandler) replyFromSource(w http.ResponseWriter, t coords.Tile, source string) {
+	url := strings.Replace(source, "{tile}", t.Path(), 1)
 	h.logger.Printf("Get from source %v", url)
 
 	data, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
@@ -103,10 +103,10 @@ func (h mapsHandler) replyFromSource(w http.ResponseWriter, zxy coords.ZXY, sour
 	return
 }
 
-func (h mapsHandler) sendToWriter(w http.ResponseWriter, zxy coords.ZXY, style string) {
+func (h mapsHandler) sendToWriter(w http.ResponseWriter, t coords.Tile, style string) {
 	url := h.cfg.Reader.WriterAddr
 	url = strings.Replace(url, "{style}", style, 1)
-	url = strings.Replace(url, "{metatile}", zxy.ConvertToMeta().Path(), 1)
+	url = strings.Replace(url, "{metatile}", t.ToMetatile().Path(), 1)
 	h.logger.Printf("Send request to writer: %v", url)
 
 	_, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)

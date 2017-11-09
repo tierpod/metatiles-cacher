@@ -18,34 +18,34 @@ type XYBox struct {
 }
 type hashes [5]int
 
-// Metatile describes metatile coordinates. Z: Zoom level, Hashes: hashes, calculated from ZXY.
+// Metatile describes metatile coordinates: Zoom level and Hashes, calculated from Tile.
 type Metatile struct {
-	Z      int
+	Zoom   int
 	Hashes hashes
 }
 
 func (m Metatile) String() string {
-	return fmt.Sprintf("Metatile{Z:%v Hashes:%v}", m.Z, m.Hashes)
+	return fmt.Sprintf("Metatile{Zoom:%v Hashes:%v}", m.Zoom, m.Hashes)
 }
 
 // Size returns metatile size for this zoom level.
 func (m Metatile) Size() int {
-	size := metatileSize(m.Z)
+	size := metatileSize(m.Zoom)
 	return size
 }
 
-// ConvertToXYBox returns box of x, y coordinates.
-func (m Metatile) ConvertToXYBox() XYBox {
+// ToXYBox returns box of x, y coordinates for this metatile.
+func (m Metatile) ToXYBox() XYBox {
 	size := m.Size()
-	xMin, yMin := metaToXY(m.Hashes)
+	xMin, yMin := metatileToXY(m.Hashes)
 	x := util.MakeIntSlice(xMin, xMin+size)
 	y := util.MakeIntSlice(yMin, yMin+size)
 	return XYBox{x, y}
 }
 
-// MinXY returns mininal x and y coordinates contains in metatile.
+// MinXY returns mininal x and y coordinates for this metatile.
 func (m Metatile) MinXY() (x int, y int) {
-	x, y = metaToXY(m.Hashes)
+	x, y = metatileToXY(m.Hashes)
 	return
 }
 
@@ -56,7 +56,7 @@ func (m Metatile) Path() string {
 	h2 := strconv.Itoa(m.Hashes[2])
 	h3 := strconv.Itoa(m.Hashes[3])
 	h4 := strconv.Itoa(m.Hashes[4])
-	return strconv.Itoa(m.Z) + "/" + h4 + "/" + h3 + "/" + h2 + "/" + h1 + "/" + h0 + ".meta"
+	return strconv.Itoa(m.Zoom) + "/" + h4 + "/" + h3 + "/" + h2 + "/" + h1 + "/" + h0 + ".meta"
 }
 
 // Path returns filepath of metatile
@@ -74,24 +74,7 @@ func (m Metatile) Path() string {
 	return filepath.Join(dirs...)
 }*/
 
-func xyToMeta(x, y int) hashes {
-	var xx, yy, mask int
-
-	mask = MaxMetatileSize - 1
-	xx = x & ^mask
-	yy = y & ^mask
-	h := hashes{}
-
-	for i := 0; i < 5; i++ {
-		h[i] = ((xx & 0x0f) << 4) | (yy & 0x0f)
-		xx >>= 4
-		yy >>= 4
-	}
-
-	return h
-}
-
-func metaToXY(h hashes) (x, y int) {
+func metatileToXY(h hashes) (x, y int) {
 	var xx, yy int
 
 	for i := 4; i >= 0; i-- {
@@ -112,59 +95,61 @@ func metatileSize(z int) int {
 	return MaxMetatileSize
 }
 
-// MetaMinURLPathItems is the minimum url items, splitted by separator "/".
-const MetaMinURLPathItems int = 7
+// MetatileMinURLPathItems is the minimum url items length, splitted by separator "/".
+//
+// Example: /style/zoom/0/0/0/0/0.meta has length 7.
+const MetatileMinURLPathItems int = 7
 
-// NewMetaFromURL extracts Metatile zoom, hashes, style from url string.
-func NewMetaFromURL(url string) (m Metatile, style string, err error) {
+// NewMetatileFromURL extracts Metatile zoom, hashes, style from url string.
+func NewMetatileFromURL(url string) (m Metatile, style string, err error) {
 	items := strings.Split(url, "/")
 	il := len(items)
-	if il < MetaMinURLPathItems {
-		err = fmt.Errorf("NewMetaFromURL: Wrong url items length: expected %v, got %v", MetaMinURLPathItems, url)
+	if il < MetatileMinURLPathItems {
+		err = fmt.Errorf("NewMetatileFromURL: wrong url items length: %v (%v/%v)", url, il, MetatileMinURLPathItems)
 		return
 	}
 
 	// processing -1 value (item.format)
 	last := strings.Split(items[il-1], ".")
 	if len(last) != 2 {
-		err = fmt.Errorf("NewMetaFromURL: Wrong last item: %v", items[il-1])
+		err = fmt.Errorf("NewMetatileFromURL: wrong last item: %v", items[il-1])
 		return
 	}
 
 	h0, err := strconv.Atoi(last[0])
 	if err != nil {
-		err = fmt.Errorf("NewMetaFromURL: h0: %v", err)
+		err = fmt.Errorf("NewMetatileFromURL: h0: %v", err)
 		return
 	}
 
 	h1, err := strconv.Atoi(items[il-2])
 	if err != nil {
-		err = fmt.Errorf("NewMetaFromURL: h1: %v", err)
+		err = fmt.Errorf("NewMetatileFromURL: h1: %v", err)
 		return
 	}
 
 	h2, err := strconv.Atoi(items[il-3])
 	if err != nil {
-		err = fmt.Errorf("NewMetaFromURL: h2: %v", err)
+		err = fmt.Errorf("NewMetatileFromURL: h2: %v", err)
 		return
 	}
 
 	h3, err := strconv.Atoi(items[il-4])
 	if err != nil {
-		err = fmt.Errorf("NewMetaFromURL: h3: %v", err)
+		err = fmt.Errorf("NewMetatileFromURL: h3: %v", err)
 		return
 	}
 
 	h4, err := strconv.Atoi(items[il-5])
 	if err != nil {
-		err = fmt.Errorf("NewMetaFromURL: h4: %v", err)
+		err = fmt.Errorf("NewMetatileFromURL: h4: %v", err)
 		return
 	}
 	m.Hashes = [5]int{h0, h1, h2, h3, h4}
 
-	m.Z, err = strconv.Atoi(items[il-6])
+	m.Zoom, err = strconv.Atoi(items[il-6])
 	if err != nil {
-		err = fmt.Errorf("NewMetaFromURL: Z: %v", err)
+		err = fmt.Errorf("NewMetatileFromURL: Zoom: %v", err)
 		return
 	}
 

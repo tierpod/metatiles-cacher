@@ -135,7 +135,7 @@ func main() {
 
 	for t := range tiles {
 		if flagMeta {
-			fmt.Println(flagPrefix + t.ConvertToMeta().Path())
+			fmt.Println(flagPrefix + t.ToMetatile().Path())
 		} else {
 			fmt.Println(flagPrefix + t.Path())
 		}

@@ -22,15 +22,15 @@ type addHandler struct {
 }
 
 func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	meta, style, err := coords.NewMetaFromURL(r.URL.Path)
+	m, style, err := coords.NewMetatileFromURL(r.URL.Path)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if meta.Z < h.cfg.Zoom.Min || meta.Z > h.cfg.Zoom.Max {
-		h.logger.Printf("[ERROR] Wrong zoom level: Z(%v)", meta.Z)
+	if m.Zoom < h.cfg.Zoom.Min || m.Zoom > h.cfg.Zoom.Max {
+		h.logger.Printf("[ERROR] Wrong zoom level: Zoom(%v)", m.Zoom)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -42,10 +42,10 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := style + "/" + meta.Path()
+	q := style + "/" + m.Path()
 	if h.queue.Add(q) {
 		h.logger.Printf("[DEBUG] Add to queue: %v", q)
-		go h.fetchAndWrite(meta, style, source)
+		go h.fetchAndWrite(m, style, source)
 		return
 	}
 
@@ -53,25 +53,25 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h addHandler) fetchAndWrite(meta coords.Metatile, style, source string) error {
+func (h addHandler) fetchAndWrite(m coords.Metatile, style, source string) error {
 	var result [][]byte
-	var url, zxy string
+	var url, t string
 
 	defer func() {
-		q := style + "/" + meta.Path()
+		q := style + "/" + m.Path()
 		h.logger.Printf("Done, del from queue: %v", q)
 		h.queue.Del(q)
 	}()
 
-	minX, minY := meta.MinXY()
-	h.logger.Printf("Fetch Style(%v) Z(%v) X(%v-%v) Y(%v-%v) Source(%v)",
-		style, meta.Z, minX, minX+meta.Size(), minY, minY+meta.Size(), source)
+	minX, minY := m.MinXY()
+	h.logger.Printf("Fetch Style(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
+		style, m.Zoom, minX, minX+m.Size(), minY, minY+m.Size(), source)
 
-	xybox := meta.ConvertToXYBox()
+	xybox := m.ToXYBox()
 	for _, x := range xybox.X {
 		for _, y := range xybox.Y {
-			zxy = strconv.Itoa(meta.Z) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + ".png"
-			url = strings.Replace(source, "{zxy}", zxy, 1)
+			t = strconv.Itoa(m.Zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + ".png"
+			url = strings.Replace(source, "{tile}", t, 1)
 			// fc.logger.Printf("[DEBUG] Filecache/fetchAndWrite: Fetch %v", url)
 			res, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
 			if err != nil {
@@ -82,7 +82,7 @@ func (h addHandler) fetchAndWrite(meta coords.Metatile, style, source string) er
 		}
 	}
 
-	err := h.cache.Write(meta, style, result)
+	err := h.cache.Write(m, style, result)
 	if err != nil {
 		h.logger.Printf("[ERROR] Add/fetchAndWrite: %v", err)
 		return fmt.Errorf("Add/fetchAndWrite: %v", err)
