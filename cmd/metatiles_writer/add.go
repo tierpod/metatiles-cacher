@@ -15,8 +15,10 @@ import (
 )
 
 type addHandler struct {
+	queue *queue.Uniq
+	qkey  string
+
 	logger *log.Logger
-	queue  *queue.Uniq
 	cache  cache.Writer
 	cfg    *config.Service
 }
@@ -42,14 +44,14 @@ func (h addHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := style + "/" + m.Path()
-	if h.queue.Add(q) {
-		h.logger.Printf("[DEBUG] Add to queue: %v", q)
+	h.qkey = style + "/" + m.Path()
+	if h.queue.Add(h.qkey) {
+		h.logger.Printf("[DEBUG] Add to queue: %v", h.qkey)
 		go h.fetchAndWrite(m, style, source)
 		return
 	}
 
-	h.logger.Printf("[DEBUG] Already in queue, skip: %v", q)
+	h.logger.Printf("[DEBUG] Already in queue, skip: %v", h.qkey)
 	return
 }
 
@@ -58,9 +60,8 @@ func (h addHandler) fetchAndWrite(m coords.Metatile, style, source string) error
 	var url, t string
 
 	defer func() {
-		q := style + "/" + m.Path()
-		h.logger.Printf("Done, del from queue: %v", q)
-		h.queue.Del(q)
+		h.logger.Printf("Done, del from queue: %v", h.qkey)
+		h.queue.Del(h.qkey)
 	}()
 
 	minX, minY := m.MinXY()
