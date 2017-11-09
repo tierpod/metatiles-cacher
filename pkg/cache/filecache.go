@@ -24,24 +24,20 @@ func NewFileCacheReader(cfg config.FileCacheSection, logger *log.Logger) (*FileC
 		return nil, fmt.Errorf("NewFileCacheReader: %v is not exist", cfg.RootDir)
 	}
 
-	fc := &FileCacheReader{
+	fc := FileCacheReader{
 		cfg:    cfg,
 		logger: logger,
 	}
 
-	return fc, nil
+	return &fc, nil
 }
 
 // Read reads tile data from metatile.
 func (r *FileCacheReader) Read(tile coords.ZXY, style string) (data []byte, err error) {
 	path := r.cfg.RootDir + "/" + style + "/" + tile.ConvertToMeta().Path()
-	r.logger.Printf("[DEBUG] FileCacheReader: Read %v from metatile %v", tile, path)
+	r.logger.Printf("[DEBUG] FileCacheReader: read %v from metatile %v", tile, path)
 
 	file, err := os.Open(path)
-	if os.IsNotExist(err) {
-		r.logger.Printf("[WARN] FileCacheReader: File not found %v", path)
-		return nil, nil
-	}
 	if err != nil {
 		return nil, fmt.Errorf("FileCacheReader: %v", err)
 	}
@@ -85,12 +81,12 @@ func NewFileCacheWriter(cfg config.FileCacheSection, logger *log.Logger) (*FileC
 		return nil, fmt.Errorf("NewFileCacheWriter: %v", err)
 	}
 
-	fc := &FileCacheWriter{
+	fc := FileCacheWriter{
 		cfg:    cfg,
 		logger: logger,
 	}
 
-	return fc, nil
+	return &fc, nil
 }
 
 // Write writes metatile data to disk.

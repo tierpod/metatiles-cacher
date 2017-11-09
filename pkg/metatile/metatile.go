@@ -107,7 +107,7 @@ func decodeHeader(r io.Reader) (*metaLayout, error) {
 		return nil, err
 	}
 	if ml.Magic[0] != 'M' || ml.Magic[1] != 'E' || ml.Magic[2] != 'T' || ml.Magic[3] != 'A' {
-		return nil, fmt.Errorf("Invalid Magic field: %v", ml.Magic)
+		return nil, fmt.Errorf("invalid Magic field: %v", ml.Magic)
 	}
 
 	if err = binary.Read(r, endian, &ml.Count); err != nil {
@@ -134,6 +134,7 @@ func decodeHeader(r io.Reader) (*metaLayout, error) {
 		}
 		ml.Index = append(ml.Index, entry)
 	}
+
 	return ml, nil
 }
 
@@ -147,20 +148,28 @@ func GetTile(r io.ReadSeeker, t coords.ZXY) ([]byte, error) {
 	size := int32(math.Sqrt(float64(ml.Count)))
 	index := (int32(t.X)-ml.X)*size + (int32(t.Y) - ml.Y)
 	if index >= ml.Count {
-		return nil, fmt.Errorf("Invalid index %v/%v", index, ml.Count)
+		return nil, fmt.Errorf("invalid index %v/%v", index, ml.Count)
 	}
+
 	entry := ml.Index[index]
 	if entry.Size > MaxEntrySize {
 		return nil, fmt.Errorf("entry size > MaxEntrySize (size: %v)", entry.Size)
 	}
-	r.Seek(int64(entry.Offset), 0)
+
+	_, err = r.Seek(int64(entry.Offset), 0)
+	if err != nil {
+		return nil, err
+	}
+
 	buf := make([]byte, entry.Size)
 	l, err := r.Read(buf)
 	if err != nil {
 		return nil, err
 	}
+
 	if int32(l) != entry.Size {
-		return nil, fmt.Errorf("Invalid tile size: %v != %v", l, entry.Size)
+		return nil, fmt.Errorf("invalid tile size: %v != %v", l, entry.Size)
 	}
+
 	return buf, nil
 }
