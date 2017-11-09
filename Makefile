@@ -1,6 +1,6 @@
 BINARIES  := bin/convert_latlong bin/metatiles_reader bin/metatiles_writer
 
-VERSION ?= 0.2
+VERSION ?= 0.3
 GITHASH := $(shell git rev-parse --short HEAD)
 FULLVER := $(VERSION)-git.$(shell git rev-parse --abbrev-ref HEAD).$(shell git rev-parse --short HEAD)
 
