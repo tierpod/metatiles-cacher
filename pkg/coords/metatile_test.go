@@ -114,7 +114,7 @@ func TestNewMetatileFromURL(t *testing.T) {
 			Metatile{Zoom: 10, Hashes: [5]int{33, 0, 0, 0, 128}},
 		},
 		{
-			"http://localhost/test/add/style/12/128/0/128/0/33.m",
+			"http://localhost/test/add/style/12/128/0/128/0/33.meta",
 			"style",
 			Metatile{Zoom: 12, Hashes: [5]int{33, 0, 128, 0, 128}},
 		},
