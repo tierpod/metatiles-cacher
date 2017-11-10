@@ -6,14 +6,15 @@ import (
 	"strings"
 )
 
-// Tile describes tile coordinates. Zoom level, X, Y.
+// Tile describes tile coordinates. Zoom level, X, Y and extension.
 type Tile struct {
 	Zoom int
 	X, Y int
+	Ext  string
 }
 
 func (t Tile) String() string {
-	return fmt.Sprintf("Tile{Zoom:%v X:%v Y:%v}", t.Zoom, t.X, t.Y)
+	return fmt.Sprintf("Tile{Zoom:%v X:%v Y:%v Ext:%v}", t.Zoom, t.X, t.Y, t.Ext)
 }
 
 // ConvertToLangLong converts z, x, y coordinates to latitude and longtitude
@@ -58,7 +59,21 @@ func (t Tile) MinMetatileXY() (x, y int) {
 
 // Path returns filepath of tile, based on Z, X, Y coordinates. Delimiter is "/".
 func (t Tile) Path() string {
-	return strconv.Itoa(t.Zoom) + "/" + strconv.Itoa(t.X) + "/" + strconv.Itoa(t.Y) + ".png"
+	return strconv.Itoa(t.Zoom) + "/" + strconv.Itoa(t.X) + "/" + strconv.Itoa(t.Y) + `.` + t.Ext
+}
+
+// Mimetype return mimetype based on tile extension.
+func (t Tile) Mimetype() (string, error) {
+	switch t.Ext {
+	case "png":
+		return "image/png", nil
+	case "json", "topojson", "geojson":
+		return "application/json", nil
+	case "mvt":
+		return "application/vnd.mapbox-vector-tile", nil
+	default:
+		return "", fmt.Errorf("unknown mimetype for extension \"%v\"", t.Ext)
+	}
 }
 
 // Path returns filepath of tile
@@ -79,7 +94,7 @@ func (t Tile) Path() string {
 const TileMinURLPathItems int = 5
 
 // NewTileFromURL extracts Tile coordinates, style, format from url string.
-func NewTileFromURL(url string) (t Tile, style, format string, err error) {
+func NewTileFromURL(url string) (t Tile, style string, err error) {
 	items := strings.Split(url, "/")
 	il := len(items)
 	if il < TileMinURLPathItems {
@@ -87,16 +102,16 @@ func NewTileFromURL(url string) (t Tile, style, format string, err error) {
 		return
 	}
 
-	// processing -1 value (y.format)
-	yformat := strings.Split(items[il-1], ".")
-	if len(yformat) != 2 {
+	// processing -1 value (y.png), split to ["y" "png"]
+	yext := strings.Split(items[il-1], ".")
+	if len(yext) != 2 {
 		err = fmt.Errorf("NewTileFromURL: wrong filename format: %v", items[il-1])
 		return
 	}
 
-	format = yformat[1]
+	t.Ext = yext[1]
 
-	t.Y, err = strconv.Atoi(yformat[0])
+	t.Y, err = strconv.Atoi(yext[0])
 	if err != nil {
 		err = fmt.Errorf("NewTileFromURL: Y: %v", err)
 		return

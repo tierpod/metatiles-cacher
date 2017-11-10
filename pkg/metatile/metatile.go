@@ -14,7 +14,7 @@ const (
 	// MaxCount is the maximum count of tiles in metatile.
 	MaxCount = 1000
 	// MaxEntrySize is the maximum size of metatile entry.
-	MaxEntrySize = 100000
+	MaxEntrySize = 1000000
 )
 
 type metaEntry struct {
@@ -74,12 +74,16 @@ func Encode(w io.Writer, m coords.Metatile, tiles [][]byte) error {
 
 	for i := 0; i < len(tiles); i++ {
 		tile := tiles[i]
+		s := int32(len(tile))
+		if s > MaxEntrySize {
+			return fmt.Errorf("entry size > MaxEntrySize (size: %v)", s)
+		}
 
 		ml.Index = append(ml.Index, metaEntry{
 			Offset: offset,
-			Size:   int32(len(tile)),
+			Size:   s,
 		})
-		offset += int32(len(tile))
+		offset += s
 	}
 
 	if err := encodeHeader(w, ml); err != nil {

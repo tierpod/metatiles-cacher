@@ -14,6 +14,7 @@ import (
 )
 
 const defaultPrefix = "/var/lib/mod_tile/style/"
+const defaultExt = "png"
 
 var version string
 
@@ -91,16 +92,16 @@ func main() {
 		flagLong    float64Pair
 		flagZooms   intPair
 		flagPrefix  string
+		flagExt     string
 		flagMeta    bool
 		flagVersion bool
 	)
 
-	flag.Var(&flagLat, "latitudes", "Latitude pair values, separated by '-'")
 	flag.Var(&flagLat, "lat", "Sortland to -latitudes")
-	flag.Var(&flagLong, "longtitudes", "Longtitude pair values, separated by '-'")
 	flag.Var(&flagLong, "long", "Shortland to -longtitudes")
 	flag.Var(&flagZooms, "zooms", "Zooms range, separated by '-': 10-12")
 	flag.StringVar(&flagPrefix, "prefix", defaultPrefix, "Output string prefix")
+	flag.StringVar(&flagExt, "ext", defaultExt, "Output extension for tile (metatile always has 'meta' ext)")
 	flag.BoolVar(&flagMeta, "meta", false, "Convert output to metatiles format?")
 	flag.BoolVar(&flagVersion, "v", false, "Show version and exit")
 	flag.Parse()
@@ -131,7 +132,7 @@ func main() {
 	bottom := coords.LatLong{Lat: flagLat.min, Long: flagLong.max}
 	zooms := util.MakeIntSlice(flagZooms.min, flagZooms.max+1)
 
-	tiles := coords.NewBBoxFromLatLong(zooms, top, bottom)
+	tiles := coords.NewBBoxFromLatLong(zooms, top, bottom, flagExt)
 
 	for t := range tiles {
 		if flagMeta {

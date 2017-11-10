@@ -1,10 +1,13 @@
 metatiles-cacher
 ================
 
-metatiles-cacher contains a few small services:
+metatiles-cacher contains:
 
-1) metatiles_cacher - for serving tiles from metatiles cache. Contains slippy-map based on [LeafLet][1].
-   If tile not found in cache, download from remote source and write to metatiles cache.
+1) metatiles_cacher - daemon for serving tiles from metatiles cache. If tile not found in cache,
+download from remote source and write to metatiles cache.
+
+Contains slippy-map based on [LeafLet][1] for png tiles. For vector tiles, you can use [Tangram][5]
+(download and put it in static directory).
 
 2) convert_latlong - converts latitude and longitude to z, x, y format
 
@@ -40,3 +43,4 @@ Based on
 [2]: https://github.com/sputnik-maps/gopnik
 [3]: https://github.com/apeyroux/gosm
 [4]: http://asciiflow.com/
+[5]: https://mapzen.com/documentation/vector-tiles/display-tiles/
