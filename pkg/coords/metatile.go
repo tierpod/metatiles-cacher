@@ -52,11 +52,16 @@ func (m Metatile) MinXY() (x int, y int) {
 // Path returns filepath of metatile, based on zoom level and hashes. Delimiter is "/".
 func (m Metatile) Path() string {
 	h0 := strconv.Itoa(m.Hashes[0])
+	return m.Dir() + "/" + h0 + ".meta"
+}
+
+// Dir returns dir for storing metatile file.
+func (m Metatile) Dir() string {
 	h1 := strconv.Itoa(m.Hashes[1])
 	h2 := strconv.Itoa(m.Hashes[2])
 	h3 := strconv.Itoa(m.Hashes[3])
 	h4 := strconv.Itoa(m.Hashes[4])
-	return strconv.Itoa(m.Zoom) + "/" + h4 + "/" + h3 + "/" + h2 + "/" + h1 + "/" + h0 + ".meta"
+	return strconv.Itoa(m.Zoom) + "/" + h4 + "/" + h3 + "/" + h2 + "/" + h1
 }
 
 // Path returns filepath of metatile

@@ -63,7 +63,7 @@ func TestMetatileSize(t *testing.T) {
 	}
 }
 
-func BenchmarkMetatilePath(b *testing.B) {
+func BenchmarkMetatileFilepath(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		m := Metatile{Zoom: 1, Hashes: [5]int{0, 0, 0, 0, 128}}
 		m.Path()
