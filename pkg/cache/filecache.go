@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -75,13 +76,23 @@ func (fc *FileCache) Write(m coords.Metatile, style string, data [][]byte) error
 		return fmt.Errorf("FileCache: %v", err)
 	}
 
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	tmpDir := fc.cfg.RootDir + "/" + style + "/" + m.Dir()
+	file, err := ioutil.TempFile(tmpDir, "fetch")
 	if err != nil {
 		return fmt.Errorf("FileCache: %v", err)
 	}
-	defer file.Close()
+	defer func() {
+		file.Close()
+		os.Remove(file.Name())
+	}()
+	// fc.logger.Printf("[DEBUG] FileCache: write to temp file: %v", file.Name())
 
 	err = metatile.Encode(file, m, data)
+	if err != nil {
+		return fmt.Errorf("FileCache: %v", err)
+	}
+
+	err = os.Rename(file.Name(), path)
 	if err != nil {
 		return fmt.Errorf("FileCache: %v", err)
 	}
