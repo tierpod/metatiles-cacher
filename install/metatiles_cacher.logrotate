@@ -1,0 +1,11 @@
+/var/log/metatiles-cacher/cacher.log
+{
+    missingok
+    nocompress
+    rotate 7
+    size 10M
+    sharedscripts
+    postrotate
+        /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}
