@@ -55,7 +55,7 @@ func (fc *FileCache) Read(t coords.Tile, style string) (data []byte, err error) 
 // Check checks if tile in the file cache. If found, return found = true and mtime = modification time of file.
 func (fc *FileCache) Check(t coords.Tile, style string) (found bool, mtime time.Time) {
 	path := fc.cfg.RootDir + "/" + style + "/" + t.ToMetatile().Path()
-	fc.logger.Printf("[DEBUG] FileCache/Check: search file: %v", path)
+	fc.logger.Printf("[DEBUG] FileCache: check %v", path)
 
 	stat, err := os.Stat(path)
 	if !os.IsNotExist(err) {
