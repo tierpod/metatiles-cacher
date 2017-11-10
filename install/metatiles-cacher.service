@@ -1,0 +1,15 @@
+[Unit]
+Description=Metatiles cacher daemon
+After=network.target
+
+[Service]
+;Type=notify
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/metatiles_cacher
+ExecStart=/opt/metatiles_cacher/metatiles_cacher -config ./config.yaml
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
