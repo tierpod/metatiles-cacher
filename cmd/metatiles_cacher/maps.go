@@ -37,7 +37,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	source, found := h.cfg.Sources.Map[style]
+	source, found := h.cfg.Sources[style]
 	if !found {
 		h.logger.Printf("[ERROR] Style not found in sources: %v", style)
 		w.WriteHeader(http.StatusNotFound)
@@ -55,12 +55,12 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// not found in cache
-	if h.cfg.Reader.UseSources {
+	if h.cfg.Cacher.UseSource {
 		h.replyFromSource(w, t, source)
 	}
 
 	// fetch tiles for metatile and write to cache?
-	if h.cfg.Reader.UseWriter {
+	if h.cfg.Cacher.UseWriter {
 		m := t.ToMetatile()
 		qkey := style + "/" + m.Path()
 
@@ -79,7 +79,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h mapsHandler) replyFromCache(w http.ResponseWriter, t coords.Tile, style string, etag, ifNoneMatch string) {
 	w.Header().Set("Etag", etag)
-	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Reader.MaxAge))
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Cacher.MaxAge))
 
 	if ifNoneMatch == etag {
 		h.logger.Printf("[DEBUG] File not modified: Etag(%v) == If-None-Match(%v)", etag, ifNoneMatch)

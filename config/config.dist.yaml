@@ -1,14 +1,9 @@
-reader:
+cacher:
   bind: localhost:8080
-  use_writer: true # send requests to writer?
-  use_sources: true # send requests to remote sources?
-  writer_addr: http://localhost:8081/add/{style}/{metatile}
-  max_age: 86400  # Cache-Control: max-age
-  x_token: 123
-
-writer:
-  bind: localhost:8081
-  x_token: 123
+  use_writer: true # write to cache?
+  use_source: true # get tiles from remote sources?
+  max_age: 86400   # Cache-Control: max-age header
+  x_token: 123     # X-Token header for access to /status
 
 zoom:
   min: 1

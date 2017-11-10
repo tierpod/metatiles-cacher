@@ -10,35 +10,26 @@ import (
 
 // Service is the root of configuration.
 type Service struct {
-	Reader     ReaderSection     `yaml:"reader"`
-	Writer     WriterSection     `yaml:"writer"`
+	Cacher     CacherSection     `yaml:"cacher"`
 	Zoom       ZoomSection       `yaml:"zoom"`
 	Log        LogSection        `yaml:"log"`
 	FileCache  FileCacheSection  `yaml:"filecache"`
 	HTTPClient HTTPClientSection `yaml:"httpclient"`
-	Sources    SourcesSection    `yaml:"sources"`
+	Sources    map[string]string `yaml:"sources"`
 }
 
-// ReaderSection contains Reader service configuration.
-type ReaderSection struct {
-	// Bind to address
+// CacherSection contains metatiles_cacher service configuration.
+type CacherSection struct {
+	// Bind to address.
 	Bind string `yaml:"bind"`
-	// Send requests to writer service?
+	// Send requests to remote source?
+	UseSource bool `yaml:"use_source"`
+	// Write to metatile cache?
 	UseWriter bool `yaml:"use_writer"`
-	// Send requests to remote sources?
-	UseSources bool `yaml:"use_sources"`
-	// writer service address
-	WriterAddr string `yaml:"writer_addr"`
-	// Token for XToken handler
+	// Token for XToken handler.
 	XToken string `yaml:"x_token"`
-	// Cache-Control: max-age value in seconds
+	// Cache-Control: max-age value in seconds.
 	MaxAge int `yaml:"max_age"`
-}
-
-// WriterSection contains Writer service configuration.
-type WriterSection struct {
-	Bind   string `yaml:"bind"`
-	XToken string `yaml:"x_token"`
 }
 
 // ZoomSection contains min and max zoom levels.
@@ -61,33 +52,6 @@ type FileCacheSection struct {
 // HTTPClientSection contains http client configuration.
 type HTTPClientSection struct {
 	UserAgent string `yaml:"user_agent"`
-}
-
-// SourcesSection contains map of sources: key is name, value is url.
-type SourcesSection struct {
-	Map map[string]string
-}
-
-// UnmarshalYAML reads sources to Map["name"] = "url"
-func (s *SourcesSection) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var url, source string
-	var values yaml.MapSlice
-
-	err := unmarshal(&values)
-	if err != nil {
-		return nil
-	}
-
-	m := make(map[string]string)
-
-	for _, v := range values {
-		url = v.Key.(string)
-		source = v.Value.(string)
-		m[url] = source
-	}
-
-	s.Map = m
-	return nil
 }
 
 // Load loads yaml file and creates new service configuration.
