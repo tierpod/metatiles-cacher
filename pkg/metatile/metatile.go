@@ -13,8 +13,8 @@ import (
 const (
 	// MaxCount is the maximum count of tiles in metatile.
 	MaxCount = 1000
-	// MaxEntrySize is the maximum size of metatile entry.
-	MaxEntrySize = 1000000
+	// MaxEntrySize is the maximum size of metatile entry in bytes.
+	MaxEntrySize = 2000000
 )
 
 type metaEntry struct {
