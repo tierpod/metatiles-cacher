@@ -3,7 +3,6 @@ package httpclient
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -34,19 +33,4 @@ func Get(url, ua string) (data []byte, err error) {
 		return nil, fmt.Errorf("httpclient/Get: %v", err)
 	}
 	return data, nil
-}
-
-// PostJSON posts json data by url
-func PostJSON(url string, body io.Reader) error {
-	res, err := http.Post(url, "application/json; charset=utf-8", body)
-	if err != nil {
-		return fmt.Errorf("httpclient.PostJSON: %v: %v", url, err)
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return fmt.Errorf("httpclient.PostJSON: %v: Response status %v", url, res.StatusCode)
-	}
-
-	return nil
 }
