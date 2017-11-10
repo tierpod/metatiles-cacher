@@ -30,7 +30,7 @@ func main() {
 	)
 
 	flag.BoolVar(&flagVersion, "version", false, "Show version and exit")
-	flag.StringVar(&flagConfig, "config", "./config.json", "Path to config file")
+	flag.StringVar(&flagConfig, "config", "./config.yaml", "Path to config file")
 	flag.Parse()
 
 	if flagVersion {
