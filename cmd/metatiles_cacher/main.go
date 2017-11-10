@@ -1,3 +1,7 @@
+// metatiles_cacher is the small web service for serving tiles from metatiles cache. If tile not
+// found in cache, get it from remote source and write to metatiles cache.
+//
+// Contains slippy map based on LeafLet.
 package main
 
 import (
@@ -7,7 +11,7 @@ import (
 	"net/http"
 	"os"
 
-	_ "net/http/pprof"
+	// _ "net/http/pprof"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
@@ -41,29 +45,31 @@ func main() {
 
 	logger := logger.New(os.Stdout, cfg.Log.Debug, cfg.Log.Datetime)
 
-	cw, err := cache.NewFileCacheWriter(cfg.FileCache, logger)
+	fc, err := cache.NewFileCache(cfg.FileCache, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	uq := queue.NewUniq()
 
-	http.Handle("/add/", handler.LogConnection(
-		addHandler{
-			cache:  cw,
-			queue:  uq,
-			cfg:    cfg,
-			logger: logger}, logger))
 	http.Handle("/status", handler.LogConnection(
 		handler.XToken(
-			statusHandler{
-				queue:  uq,
-				logger: logger,
-			}, cfg.Writer.XToken, logger),
+			statusHandler{queue: uq}, cfg.Reader.XToken, logger,
+		),
 		logger))
+	http.Handle("/static/", handler.LogConnection(
+		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))), logger),
+	)
+	http.Handle("/maps/", handler.LogConnection(
+		mapsHandler{
+			logger: logger,
+			cache:  fc,
+			cfg:    cfg,
+			queue:  uq,
+		}, logger))
 
-	logger.Printf("Starting web server on %v", cfg.Writer.Bind)
-	err = http.ListenAndServe(cfg.Writer.Bind, nil)
+	logger.Printf("Starting web server on: %v", cfg.Reader.Bind)
+	err = http.ListenAndServe(cfg.Reader.Bind, nil)
 	if err != nil {
 		logger.Fatal(err)
 	}
