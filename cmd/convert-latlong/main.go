@@ -1,3 +1,4 @@
+// convert-latlong is the small tool for converting latitude and longitude coordinates to z, x, y.
 package main
 
 import (
@@ -97,8 +98,8 @@ func main() {
 		flagVersion bool
 	)
 
-	flag.Var(&flagLat, "lat", "Sortland to -latitudes")
-	flag.Var(&flagLong, "long", "Shortland to -longtitudes")
+	flag.Var(&flagLat, "lat", "Latitude coordinates")
+	flag.Var(&flagLong, "long", "Longitude coordinates")
 	flag.Var(&flagZooms, "zooms", "Zooms range, separated by '-': 10-12")
 	flag.StringVar(&flagPrefix, "prefix", defaultPrefix, "Output string prefix")
 	flag.StringVar(&flagExt, "ext", defaultExt, "Output extension for tile (metatile always has 'meta' ext)")

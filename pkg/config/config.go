@@ -18,7 +18,7 @@ type Service struct {
 	Sources    map[string]string `yaml:"sources"`
 }
 
-// CacherSection contains metatiles_cacher service configuration.
+// CacherSection contains cacher service configuration.
 type CacherSection struct {
 	// Bind to address.
 	Bind string `yaml:"bind"`

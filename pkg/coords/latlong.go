@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-// LatLong describes tile coordinates in latitude and longtitude format.
+// LatLong describes tile coordinates in latitude and longitude format.
 type LatLong struct {
 	Lat, Long float64
 }

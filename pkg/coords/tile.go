@@ -17,7 +17,7 @@ func (t Tile) String() string {
 	return fmt.Sprintf("Tile{Zoom:%v X:%v Y:%v Ext:%v}", t.Zoom, t.X, t.Y, t.Ext)
 }
 
-// ConvertToLangLong converts z, x, y coordinates to latitude and longtitude
+// ConvertToLangLong converts z, x, y coordinates to latitude and longitude
 /*func (t ZXY) ConvertToLangLong() LatLong {
 	var lat, long float64
 	n := math.Pi - 2.0*math.Pi*float64(t.Y)/math.Exp2(float64(t.Z))

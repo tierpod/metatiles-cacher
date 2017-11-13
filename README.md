@@ -3,13 +3,13 @@ metatiles-cacher
 
 metatiles-cacher contains:
 
-1) metatiles_cacher - daemon for serving tiles from metatiles cache. If tile not found in cache,
+1) metatiles-cacher - daemon for serving tiles from metatiles cache. If tile not found in cache,
 download from remote source and write to metatiles cache.
 
 Contains slippy-map based on [LeafLet][1] for png tiles. For vector tiles, you can use [Tangram][5]
 (download and put it in static directory).
 
-2) convert_latlong - converts latitude and longitude to z, x, y format
+2) convert-latlong - converts latitude and longitude to z, x, y format
 
 [Workflow][4]:
 

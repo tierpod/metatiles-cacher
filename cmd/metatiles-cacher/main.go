@@ -1,4 +1,4 @@
-// metatiles_cacher is the small web service for serving tiles from metatiles cache. If tile not
+// metatiles-cacher is the small web service for serving tiles from metatiles cache. If tile not
 // found in cache, get it from remote source and write to metatiles cache.
 //
 // Contains slippy map based on LeafLet.

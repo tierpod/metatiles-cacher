@@ -7,8 +7,8 @@ After=network.target
 Type=simple
 User=root
 Group=root
-WorkingDirectory=/opt/metatiles_cacher
-ExecStart=/opt/metatiles_cacher/metatiles_cacher -config ./config.yaml
+WorkingDirectory=/opt/metatiles-cacher
+ExecStart=/opt/metatiles-cacher/metatiles-cacher -config ./config.yaml
 KillMode=process
 
 [Install]
