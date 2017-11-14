@@ -14,8 +14,11 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
-const defaultPrefix = "/var/lib/mod_tile/style/"
-const defaultExt = "png"
+// Default flags values.
+const (
+	defaultPrefix = "/var/lib/mod_tile/style/"
+	defaultExt    = "png"
+)
 
 var version string
 
@@ -98,11 +101,11 @@ func main() {
 		flagVersion bool
 	)
 
-	flag.Var(&flagLat, "lat", "Latitude coordinates")
-	flag.Var(&flagLong, "long", "Longitude coordinates")
-	flag.Var(&flagZooms, "zooms", "Zooms range, separated by '-': 10-12")
-	flag.StringVar(&flagPrefix, "prefix", defaultPrefix, "Output string prefix")
-	flag.StringVar(&flagExt, "ext", defaultExt, "Output extension for tile (metatile always has 'meta' ext)")
+	flag.Var(&flagLat, "lat", "Latitude coordinates `range`, separated by '-'")
+	flag.Var(&flagLong, "long", "Longitude coordinates `range`, separated by '-'")
+	flag.Var(&flagZooms, "zooms", "Zooms `range`, separated by '-' (example: 10-12)")
+	flag.StringVar(&flagPrefix, "prefix", defaultPrefix, "Output string `prefix`")
+	flag.StringVar(&flagExt, "ext", defaultExt, "Output `extension` for tile (metatile always has 'meta' ext)")
 	flag.BoolVar(&flagMeta, "meta", false, "Convert output to metatiles format?")
 	flag.BoolVar(&flagVersion, "v", false, "Show version and exit")
 	flag.Parse()
@@ -119,6 +122,11 @@ func main() {
 		os.Exit(0)
 	}
 
+	if flagZooms.min == 0 && flagZooms.max == 0 {
+		fmt.Println("[ERROR] -zooms flag is not set or set zero values")
+		os.Exit(1)
+	}
+
 	if flagZooms.min < 1 {
 		fmt.Printf("[ERROR] Got wrong minimum zoom level: %v < 1\n", flagZooms.min)
 		os.Exit(1)
@@ -126,6 +134,16 @@ func main() {
 
 	if flagZooms.max > 18 {
 		fmt.Printf("[ERROR] Got wrong maximum zoom level: %v > 18\n", flagZooms.max)
+		os.Exit(1)
+	}
+
+	if flagLat.min == 0 && flagLat.max == 0 {
+		fmt.Println("[ERROR] -lat flag is not set or set zero values")
+		os.Exit(1)
+	}
+
+	if flagLong.min == 0 && flagLong.max == 0 {
+		fmt.Println("[ERROR] -long flag is not set or set zero values")
 		os.Exit(1)
 	}
 
