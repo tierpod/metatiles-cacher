@@ -10,16 +10,28 @@ import (
 
 // Service is the root of configuration.
 type Service struct {
-	Cacher     CacherSection     `yaml:"cacher"`
-	Zoom       ZoomSection       `yaml:"zoom"`
-	Log        LogSection        `yaml:"log"`
-	FileCache  FileCacheSection  `yaml:"filecache"`
-	HTTPClient HTTPClientSection `yaml:"httpclient"`
-	Sources    map[string]string `yaml:"sources"`
+	Cacher     Cache      `yaml:"cacher"`
+	Zoom       Zoom       `yaml:"zoom"`
+	Log        Log        `yaml:"log"`
+	FileCache  FileCache  `yaml:"filecache"`
+	HTTPClient HTTPClient `yaml:"httpclient"`
+	Sources    []Source   `yaml:"sources"`
+	Test       string
 }
 
-// CacherSection contains cacher service configuration.
-type CacherSection struct {
+// Source returns source configuration from Sources list by given name. If it does not exists,  returns error.
+func (s Service) Source(name string) (Source, error) {
+	for _, v := range s.Sources {
+		if v.Name == name {
+			return v, nil
+		}
+	}
+
+	return Source{}, fmt.Errorf("source not found in sources")
+}
+
+// Cache contains cache service configuration.
+type Cache struct {
 	// Bind to address.
 	Bind string `yaml:"bind"`
 	// Send requests to remote source?
@@ -32,26 +44,60 @@ type CacherSection struct {
 	MaxAge int `yaml:"max_age"`
 }
 
-// ZoomSection contains min and max zoom levels.
-type ZoomSection struct {
+// Zoom contains min and max zoom levels.
+type Zoom struct {
 	Min int `yaml:"min"`
 	Max int `yaml:"max"`
 }
 
-// LogSection contains logger configuration.
-type LogSection struct {
+// Log contains logger configuration.
+type Log struct {
 	Datetime bool `yaml:"datetime"`
 	Debug    bool `yaml:"debug"`
 }
 
-// FileCacheSection contains file cache configuration.
-type FileCacheSection struct {
+// FileCache contains file cache configuration.
+type FileCache struct {
 	RootDir string `yaml:"root_dir"`
 }
 
-// HTTPClientSection contains http client configuration.
-type HTTPClientSection struct {
+// HTTPClient contains http client configuration.
+type HTTPClient struct {
 	UserAgent string `yaml:"user_agent"`
+}
+
+// Source contains source configuration.
+type Source struct {
+	Name     string `yaml:"name"`
+	URL      string `yaml:"url"`
+	CacheDir string `yaml:"cache_dir"`
+	Region   Region `yaml:"region"`
+}
+
+// HasRegion return true if source has region. Otherwise return false.
+func (s Source) HasRegion() bool {
+	if s.Region.KML == "" && s.Region.Zoom.Min == 0 && s.Region.Zoom.Max == 0 {
+		return false
+	}
+
+	return true
+}
+
+// Region contains region configuration.
+type Region struct {
+	KML      string `yaml:"kml"`
+	Zoom     Zoom   `yaml:"zoom"`
+	Polygons []byte
+}
+
+func (r *Region) readKML() error {
+	data, err := ioutil.ReadFile(r.KML)
+	if err != nil {
+		return err
+	}
+
+	r.Polygons = data
+	return nil
 }
 
 // Load loads yaml file and creates new service configuration.
@@ -68,5 +114,14 @@ func Load(path string) (*Service, error) {
 		return nil, fmt.Errorf("unmarshal config: %v", err)
 	}
 
+	// if source has "KML" section, read coordinates from given KML file
+	for i := range c.Sources {
+		if c.Sources[i].HasRegion() {
+			err = c.Sources[i].Region.readKML()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	return &c, nil
 }

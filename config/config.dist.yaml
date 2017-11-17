@@ -1,4 +1,4 @@
-cacher:
+cache:
   bind: localhost:8080
   use_writer: true # write to cache?
   use_source: true # get tiles from remote sources?
@@ -20,5 +20,19 @@ httpclient:
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
 
 sources:
-  example: http://example/style/{tile}
-  test: http://test/{tile}?api_key=123
+  - name: example
+    url: http://example/style/{tile}
+    cache_dir: example
+
+  - name: test
+    url: http://test/{tile}?api_key=123
+    cache_dir: test
+
+  - name: iran
+    url: http://example/style/{tile}
+    cache_dir: example
+    region:
+      kml: regions/iran.kml
+      zoom:
+        min: 1
+        max: 19
