@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/tierpod/metatiles-cacher/pkg/coords"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -101,16 +103,30 @@ func (s Source) hasZoom() bool {
 // Region contains region configuration.
 type Region struct {
 	File     string `yaml:"file"`
-	Polygons []byte
+	Polygons []coords.Polygon
 }
 
 func (r *Region) readFile() error {
+	type yamlPolygon struct {
+		Polygon coords.Polygon `yaml:"polygon"`
+	}
+
+	var result []yamlPolygon
+
 	data, err := ioutil.ReadFile(r.File)
 	if err != nil {
 		return err
 	}
 
-	r.Polygons = data
+	err = yaml.Unmarshal(data, &result)
+
+	// convert yaml struct to coords struct
+	var p []coords.Polygon
+	for _, v := range result {
+		p = append(p, v.Polygon)
+	}
+
+	r.Polygons = p
 	return nil
 }
 
