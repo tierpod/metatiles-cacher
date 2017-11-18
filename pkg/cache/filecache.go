@@ -16,12 +16,12 @@ import (
 // FileCache is the file cache struct, contains self configuration (RootDir) and logger. Implemets
 // cache.ReadWriter interface.
 type FileCache struct {
-	cfg    config.FileCacheSection
+	cfg    config.FileCache
 	logger *log.Logger
 }
 
 // NewFileCache creates new FileCache. Return error if cfg.RootDir does not exists.
-func NewFileCache(cfg config.FileCacheSection, logger *log.Logger) (*FileCache, error) {
+func NewFileCache(cfg config.FileCache, logger *log.Logger) (*FileCache, error) {
 	if _, err := os.Stat(cfg.RootDir); os.IsNotExist(err) {
 		return nil, fmt.Errorf("NewFileCache: %v is not exist", cfg.RootDir)
 	}
@@ -35,8 +35,8 @@ func NewFileCache(cfg config.FileCacheSection, logger *log.Logger) (*FileCache, 
 }
 
 // Read reads tile data from metatile.
-func (fc *FileCache) Read(t coords.Tile, style string) (data []byte, err error) {
-	path := fc.cfg.RootDir + "/" + style + "/" + t.ToMetatile().Path()
+func (fc *FileCache) Read(t coords.Tile, dir string) (data []byte, err error) {
+	path := fc.cfg.RootDir + "/" + dir + "/" + t.ToMetatile().Path()
 	fc.logger.Printf("[DEBUG] FileCache: read %v from metatile %v", t, path)
 
 	file, err := os.Open(path)
@@ -54,8 +54,8 @@ func (fc *FileCache) Read(t coords.Tile, style string) (data []byte, err error) 
 }
 
 // Check checks if tile in the file cache. If found, return found = true and mtime = modification time of file.
-func (fc *FileCache) Check(t coords.Tile, style string) (found bool, mtime time.Time) {
-	path := fc.cfg.RootDir + "/" + style + "/" + t.ToMetatile().Path()
+func (fc *FileCache) Check(t coords.Tile, dir string) (found bool, mtime time.Time) {
+	path := fc.cfg.RootDir + "/" + dir + "/" + t.ToMetatile().Path()
 	fc.logger.Printf("[DEBUG] FileCache: check %v", path)
 
 	stat, err := os.Stat(path)
@@ -67,8 +67,8 @@ func (fc *FileCache) Check(t coords.Tile, style string) (found bool, mtime time.
 }
 
 // Write writes metatile data to disk.
-func (fc *FileCache) Write(m coords.Metatile, style string, data [][]byte) error {
-	path := fc.cfg.RootDir + "/" + style + "/" + m.Path()
+func (fc *FileCache) Write(m coords.Metatile, dir string, data [][]byte) error {
+	path := fc.cfg.RootDir + "/" + dir + "/" + m.Path()
 	fc.logger.Printf("FileCache: write %v", path)
 
 	err := os.MkdirAll(filepath.Dir(path), 0777)
@@ -76,7 +76,7 @@ func (fc *FileCache) Write(m coords.Metatile, style string, data [][]byte) error
 		return fmt.Errorf("FileCache: %v", err)
 	}
 
-	tmpDir := fc.cfg.RootDir + "/" + style + "/" + m.Dir()
+	tmpDir := fc.cfg.RootDir + "/" + dir + "/" + m.Dir()
 	file, err := ioutil.TempFile(tmpDir, "fetch")
 	if err != nil {
 		return fmt.Errorf("FileCache: %v", err)

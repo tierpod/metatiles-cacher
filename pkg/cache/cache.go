@@ -9,13 +9,13 @@ import (
 
 // Reader provides interface for read tile data from metatiles cache.
 type Reader interface {
-	Read(t coords.Tile, style string) (data []byte, err error)
-	Check(t coords.Tile, style string) (found bool, mtime time.Time)
+	Read(t coords.Tile, dir string) (data []byte, err error)
+	Check(t coords.Tile, dir string) (found bool, mtime time.Time)
 }
 
 // Writer provides interface for write metatile data data to cache.
 type Writer interface {
-	Write(m coords.Metatile, style string, data [][]byte) error
+	Write(m coords.Metatile, dir string, data [][]byte) error
 }
 
 // ReadWriter includes Reader and Writer interfaces.
