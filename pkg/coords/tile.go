@@ -2,6 +2,7 @@ package coords
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -17,14 +18,14 @@ func (t Tile) String() string {
 	return fmt.Sprintf("Tile{Zoom:%v X:%v Y:%v Ext:%v}", t.Zoom, t.X, t.Y, t.Ext)
 }
 
-// ConvertToLangLong converts z, x, y coordinates to latitude and longitude
-/*func (t ZXY) ConvertToLangLong() LatLong {
+// ToLangLong converts z, x, y coordinates to latitude and longitude.
+func (t Tile) ToLangLong() LatLong {
 	var lat, long float64
-	n := math.Pi - 2.0*math.Pi*float64(t.Y)/math.Exp2(float64(t.Z))
+	n := math.Pi - 2.0*math.Pi*float64(t.Y)/math.Exp2(float64(t.Zoom))
 	lat = 180.0 / math.Pi * math.Atan(0.5*(math.Exp(n)-math.Exp(-n)))
-	long = float64(t.X)/math.Exp2(float64(t.Z))*360.0 - 180.0
+	long = float64(t.X)/math.Exp2(float64(t.Zoom))*360.0 - 180.0
 	return LatLong{lat, long}
-}*/
+}
 
 // ToMetatile converts Tile to Metatiles coordinates.
 func (t Tile) ToMetatile() Metatile {
