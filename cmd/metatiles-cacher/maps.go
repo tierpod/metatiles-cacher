@@ -45,7 +45,15 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if source.HasRegion() {
-		h.logger.Printf("Check if tile coords in given region")
+		h.logger.Println("[DEBUG] Check if tile coords in given region")
+		for _, p := range source.Region.Polygons {
+			in := p.Contains(t.ToLangLong())
+			if !in {
+				h.logger.Printf("[WARN] Point not in given region")
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+		}
 	}
 
 	_, err = t.Mimetype()
@@ -77,7 +85,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if h.queue.Add(qkey) {
 			h.logger.Printf("[DEBUG] Add to queue: %v", qkey)
-			go h.fetchAndWrite(m, t.Ext, style, source.URL, qkey)
+			go h.fetchAndWrite(m, t.Ext, source.CacheDir, source.URL, qkey)
 			return
 		}
 
@@ -130,7 +138,7 @@ func (h mapsHandler) replyFromSource(w http.ResponseWriter, t coords.Tile, sourc
 	return
 }
 
-func (h mapsHandler) fetchAndWrite(m coords.Metatile, ext, style, source, qkey string) error {
+func (h mapsHandler) fetchAndWrite(m coords.Metatile, ext, cacheDir, sourceURL, qkey string) error {
 	var result [][]byte
 	var url string
 
@@ -141,13 +149,13 @@ func (h mapsHandler) fetchAndWrite(m coords.Metatile, ext, style, source, qkey s
 
 	minX, minY := m.MinXY()
 	h.logger.Printf("Fetch Style(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
-		style, m.Zoom, minX, minX+m.Size(), minY, minY+m.Size(), source)
+		cacheDir, m.Zoom, minX, minX+m.Size(), minY, minY+m.Size(), sourceURL)
 
 	xybox := m.ToXYBox()
 	for _, x := range xybox.X {
 		for _, y := range xybox.Y {
 			tile := strconv.Itoa(m.Zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + `.` + ext
-			url = strings.Replace(source, "{tile}", tile, 1)
+			url = strings.Replace(sourceURL, "{tile}", tile, 1)
 			// fc.logger.Printf("[DEBUG] Filecache/fetchAndWrite: Fetch %v", url)
 			res, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
 			if err != nil {
@@ -158,7 +166,7 @@ func (h mapsHandler) fetchAndWrite(m coords.Metatile, ext, style, source, qkey s
 		}
 	}
 
-	err := h.cache.Write(m, style, result)
+	err := h.cache.Write(m, cacheDir, result)
 	if err != nil {
 		h.logger.Printf("[ERROR] fetchAndWrite: %v", err)
 		return fmt.Errorf("fetchAndWrite: %v", err)
