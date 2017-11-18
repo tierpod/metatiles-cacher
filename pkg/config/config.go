@@ -8,20 +8,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Service is the root of configuration.
-type Service struct {
-	Cacher     Cache      `yaml:"cacher"`
-	Zoom       Zoom       `yaml:"zoom"`
+const (
+	// DefaultMinZoom is the default minimum zoom level.
+	DefaultMinZoom = 1
+	// DefaultMaxZoom is the default maximum zoom level.
+	DefaultMaxZoom = 18
+)
+
+// Config is the root of configuration.
+type Config struct {
+	Service    Service    `yaml:"service"`
 	Log        Log        `yaml:"log"`
 	FileCache  FileCache  `yaml:"filecache"`
 	HTTPClient HTTPClient `yaml:"httpclient"`
 	Sources    []Source   `yaml:"sources"`
-	Test       string
 }
 
 // Source returns source configuration from Sources list by given name. If it does not exists,  returns error.
-func (s Service) Source(name string) (Source, error) {
-	for _, v := range s.Sources {
+func (c Config) Source(name string) (Source, error) {
+	for _, v := range c.Sources {
 		if v.Name == name {
 			return v, nil
 		}
@@ -30,8 +35,8 @@ func (s Service) Source(name string) (Source, error) {
 	return Source{}, fmt.Errorf("source not found in sources")
 }
 
-// Cache contains cache service configuration.
-type Cache struct {
+// Service contains metatiles-cacher service configuration.
+type Service struct {
 	// Bind to address.
 	Bind string `yaml:"bind"`
 	// Send requests to remote source?
@@ -71,12 +76,22 @@ type Source struct {
 	Name     string `yaml:"name"`
 	URL      string `yaml:"url"`
 	CacheDir string `yaml:"cache_dir"`
+	Zoom     Zoom   `yaml:"zoom"`
 	Region   Region `yaml:"region"`
 }
 
-// HasRegion return true if source has region. Otherwise return false.
+// HasRegion return true if source has region section. Otherwise return false.
 func (s Source) HasRegion() bool {
-	if s.Region.KML == "" && s.Region.Zoom.Min == 0 && s.Region.Zoom.Max == 0 {
+	if s.Region.File == "" {
+		return false
+	}
+
+	return true
+}
+
+// hasZoom return true if source has zoom section. Otherwise return false.
+func (s Source) hasZoom() bool {
+	if s.Zoom.Min == 0 && s.Zoom.Max == 0 {
 		return false
 	}
 
@@ -85,13 +100,12 @@ func (s Source) HasRegion() bool {
 
 // Region contains region configuration.
 type Region struct {
-	KML      string `yaml:"kml"`
-	Zoom     Zoom   `yaml:"zoom"`
+	File     string `yaml:"file"`
 	Polygons []byte
 }
 
-func (r *Region) readKML() error {
-	data, err := ioutil.ReadFile(r.KML)
+func (r *Region) readFile() error {
+	data, err := ioutil.ReadFile(r.File)
 	if err != nil {
 		return err
 	}
@@ -101,8 +115,8 @@ func (r *Region) readKML() error {
 }
 
 // Load loads yaml file and creates new service configuration.
-func Load(path string) (*Service, error) {
-	var c Service
+func Load(path string) (*Config, error) {
+	var c Config
 
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -114,10 +128,16 @@ func Load(path string) (*Service, error) {
 		return nil, fmt.Errorf("unmarshal config: %v", err)
 	}
 
-	// if source has "KML" section, read coordinates from given KML file
 	for i := range c.Sources {
+		// if Source.Zoom is not set, use defaults.
+		if !c.Sources[i].hasZoom() {
+			c.Sources[i].Zoom.Min = DefaultMinZoom
+			c.Sources[i].Zoom.Max = DefaultMaxZoom
+		}
+
+		// if Region has "File" section, read coordinates from given file to Region.Polygons struct.
 		if c.Sources[i].HasRegion() {
-			err = c.Sources[i].Region.readKML()
+			err = c.Sources[i].Region.readFile()
 			if err != nil {
 				return nil, err
 			}

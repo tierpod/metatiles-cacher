@@ -18,7 +18,7 @@ import (
 type mapsHandler struct {
 	logger *log.Logger
 	cache  cache.ReadWriter
-	cfg    *config.Service
+	cfg    *config.Config
 
 	queue *queue.Uniq
 }
@@ -31,10 +31,21 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t.Zoom < h.cfg.Zoom.Min || t.Zoom > h.cfg.Zoom.Max {
-		h.logger.Printf("[ERROR] Wrong zoom level: Zoom(%v)", t.Zoom)
+	source, err := h.cfg.Source(style)
+	if err != nil {
+		h.logger.Printf("[ERROR] %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
+	}
+
+	if t.Zoom < source.Zoom.Min || t.Zoom > source.Zoom.Max {
+		h.logger.Printf("[ERROR] Wrong zoom level for Source(%v): Zoom(%v)", source.Name, t.Zoom)
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	if source.HasRegion() {
+		h.logger.Printf("Check if tile coords in given region")
 	}
 
 	_, err = t.Mimetype()
@@ -44,36 +55,29 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	source, found := h.cfg.Sources[style]
-	if !found {
-		h.logger.Printf("[ERROR] Style not found in sources: %v", style)
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
 	h.logger.Printf("[DEBUG] Got request %v style(%v)", t, style)
 
-	found, mtime := h.cache.Check(t, style)
+	found, mtime := h.cache.Check(t, source.CacheDir)
 	// found in cache
 	if found {
 		etag := `"` + util.DigestString(mtime.String()) + `"`
-		h.replyFromCache(w, t, style, etag, r.Header.Get("If-None-Match"))
+		h.replyFromCache(w, t, source.CacheDir, etag, r.Header.Get("If-None-Match"))
 		return
 	}
 
 	// not found in cache
-	if h.cfg.Cacher.UseSource {
-		h.replyFromSource(w, t, source)
+	if h.cfg.Service.UseSource {
+		h.replyFromSource(w, t, source.URL)
 	}
 
 	// fetch tiles for metatile and write to cache?
-	if h.cfg.Cacher.UseWriter {
+	if h.cfg.Service.UseWriter {
 		m := t.ToMetatile()
 		qkey := style + "/" + m.Path()
 
 		if h.queue.Add(qkey) {
 			h.logger.Printf("[DEBUG] Add to queue: %v", qkey)
-			go h.fetchAndWrite(m, t.Ext, style, source, qkey)
+			go h.fetchAndWrite(m, t.Ext, style, source.URL, qkey)
 			return
 		}
 
@@ -84,9 +88,9 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h mapsHandler) replyFromCache(w http.ResponseWriter, t coords.Tile, style string, etag, ifNoneMatch string) {
+func (h mapsHandler) replyFromCache(w http.ResponseWriter, t coords.Tile, dir string, etag, ifNoneMatch string) {
 	w.Header().Set("Etag", etag)
-	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Cacher.MaxAge))
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Service.MaxAge))
 
 	if ifNoneMatch == etag {
 		h.logger.Printf("[DEBUG] File not modified: Etag(%v) == If-None-Match(%v)", etag, ifNoneMatch)
@@ -94,7 +98,7 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, t coords.Tile, style 
 		return
 	}
 
-	data, err := h.cache.Read(t, style)
+	data, err := h.cache.Read(t, dir)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -110,7 +114,7 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, t coords.Tile, style 
 
 func (h mapsHandler) replyFromSource(w http.ResponseWriter, t coords.Tile, source string) {
 	url := strings.Replace(source, "{tile}", t.Path(), 1)
-	h.logger.Printf("Get from source %v", url)
+	h.logger.Printf("Get from Source(%v)", url)
 
 	data, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
 	if err != nil {

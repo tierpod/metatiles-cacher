@@ -54,7 +54,7 @@ func main() {
 
 	http.Handle("/status", handler.LogConnection(
 		handler.XToken(
-			statusHandler{queue: uq}, cfg.Cacher.XToken, logger,
+			statusHandler{queue: uq}, cfg.Service.XToken, logger,
 		),
 		logger))
 	http.Handle("/static/", handler.LogConnection(
@@ -68,8 +68,8 @@ func main() {
 			queue:  uq,
 		}, logger))
 
-	logger.Printf("Starting web server on: %v", cfg.Cacher.Bind)
-	err = http.ListenAndServe(cfg.Cacher.Bind, nil)
+	logger.Printf("Starting web server on: %v", cfg.Service.Bind)
+	err = http.ListenAndServe(cfg.Service.Bind, nil)
 	if err != nil {
 		logger.Fatal(err)
 	}

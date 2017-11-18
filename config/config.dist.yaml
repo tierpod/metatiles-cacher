@@ -5,10 +5,6 @@ cache:
   max_age: 86400   # Cache-Control: max-age header
   x_token: 123     # X-Token header for access to /status
 
-zoom:
-  min: 1
-  max: 17
-
 log:
   datetime: true
   debug: true
@@ -31,8 +27,8 @@ sources:
   - name: iran
     url: http://example/style/{tile}
     cache_dir: example
-    region:
-      kml: regions/iran.kml
-      zoom:
-        min: 1
-        max: 19
+    region: 
+      file: regions/iran.kml
+    zoom:
+      min: 1
+      max: 19
