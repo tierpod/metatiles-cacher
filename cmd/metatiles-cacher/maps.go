@@ -85,7 +85,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if h.queue.Add(qkey) {
 			h.logger.Printf("[DEBUG] Add to queue: %v", qkey)
-			go h.fetchAndWrite(m, t.Ext, source.CacheDir, source.URL, qkey)
+			go h.fetchAndWrite(m, style, t.Ext, source.CacheDir, source.URL, qkey)
 			return
 		}
 
@@ -138,8 +138,8 @@ func (h mapsHandler) replyFromSource(w http.ResponseWriter, t coords.Tile, sourc
 	return
 }
 
-func (h mapsHandler) fetchAndWrite(m coords.Metatile, ext, cacheDir, sourceURL, qkey string) error {
-	var result [][]byte
+func (h mapsHandler) fetchAndWrite(m coords.Metatile, style, ext, cacheDir, sourceURL, qkey string) error {
+	var data [][]byte
 	var url string
 
 	defer func() {
@@ -147,11 +147,10 @@ func (h mapsHandler) fetchAndWrite(m coords.Metatile, ext, cacheDir, sourceURL, 
 		h.queue.Del(qkey)
 	}()
 
-	minX, minY := m.MinXY()
-	h.logger.Printf("Fetch Style(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
-		cacheDir, m.Zoom, minX, minX+m.Size(), minY, minY+m.Size(), sourceURL)
-
 	xybox := m.ToXYBox()
+	h.logger.Printf("Fetch Style(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
+		style, m.Zoom, xybox.X[0], xybox.X[len(xybox.X)-1], xybox.Y[0], xybox.Y[len(xybox.Y)-1], sourceURL)
+
 	for _, x := range xybox.X {
 		for _, y := range xybox.Y {
 			tile := strconv.Itoa(m.Zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + `.` + ext
@@ -162,11 +161,11 @@ func (h mapsHandler) fetchAndWrite(m coords.Metatile, ext, cacheDir, sourceURL, 
 				h.logger.Printf("[ERROR] fetchAndWrite: %v", err)
 				return fmt.Errorf("fetchAndWrite: %v", err)
 			}
-			result = append(result, res)
+			data = append(data, res)
 		}
 	}
 
-	err := h.cache.Write(m, cacheDir, result)
+	err := h.cache.Write(m, cacheDir, data)
 	if err != nil {
 		h.logger.Printf("[ERROR] fetchAndWrite: %v", err)
 		return fmt.Errorf("fetchAndWrite: %v", err)
