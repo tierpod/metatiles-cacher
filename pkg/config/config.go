@@ -91,15 +91,6 @@ func (s Source) HasRegion() bool {
 	return true
 }
 
-// hasZoom return true if source has zoom section. Otherwise return false.
-func (s Source) hasZoom() bool {
-	if s.Zoom.Min == 0 && s.Zoom.Max == 0 {
-		return false
-	}
-
-	return true
-}
-
 // Region contains region configuration.
 type Region struct {
 	File     string `yaml:"file"`
@@ -146,12 +137,17 @@ func Load(path string) (*Config, error) {
 
 	for i := range c.Sources {
 		// if Source.Zoom is not set, use defaults.
-		if !c.Sources[i].hasZoom() {
+		if c.Sources[i].Zoom.Min == 0 && c.Sources[i].Zoom.Max == 0 {
 			c.Sources[i].Zoom.Min = DefaultMinZoom
 			c.Sources[i].Zoom.Max = DefaultMaxZoom
 		}
 
-		// if Region has "File" section, read coordinates from given file to Region.Polygons struct.
+		// if Source.CacheDir is not set, use Source.Name.
+		if c.Sources[i].CacheDir == "" {
+			c.Sources[i].CacheDir = c.Sources[i].Name
+		}
+
+		// if Source.Region has "File" section, read coordinates from given file to Region.Polygons struct.
 		if c.Sources[i].HasRegion() {
 			err = c.Sources[i].Region.readFile()
 			if err != nil {
