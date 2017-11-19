@@ -15,24 +15,29 @@ func TestTileString(t *testing.T) {
 	}
 }
 
-/*func TestConvertToLatLong(t *testing.T) {
+func TestToLatLong(t *testing.T) {
+	delta := 0.01
 	var testData = []struct {
-		zxy    Tile
+		tile   Tile
 		result LatLong
 	}{
 		{
-			Tile{5, 19, 12},
-			LatLong{39.6482, 44.7653},
+			Tile{Zoom: 17, X: 89320, Y: 41182},
+			LatLong{Lat: 55.4309, Long: 65.3270},
+		},
+		{
+			Tile{Zoom: 15, X: 21059, Y: 12900},
+			LatLong{Lat: 35.7093, Long: 51.3709},
 		},
 	}
 
 	for _, tt := range testData {
-		ll := tt.zxy.ConvertToLangLong()
-		if !reflect.DeepEqual(ll, tt.result) {
-			t.Errorf("Tile ConvertToLatLong: expected %v, got %v", tt.result, ll)
+		ll := tt.tile.ToLangLong()
+		if ll.Lat < tt.result.Lat-delta || ll.Lat > tt.result.Lat+delta || ll.Long < tt.result.Long-delta || ll.Long > tt.result.Long+delta {
+			t.Errorf("Tile.ToLangLong: expected %v±%v, got %v", tt.result, delta, ll)
 		}
 	}
-}*/
+}
 
 func TestToMetatile(t *testing.T) {
 	var testData = []struct {

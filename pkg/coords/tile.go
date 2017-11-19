@@ -24,7 +24,7 @@ func (t Tile) ToLangLong() LatLong {
 	n := math.Pi - 2.0*math.Pi*float64(t.Y)/math.Exp2(float64(t.Zoom))
 	lat = 180.0 / math.Pi * math.Atan(0.5*(math.Exp(n)-math.Exp(-n)))
 	long = float64(t.X)/math.Exp2(float64(t.Zoom))*360.0 - 180.0
-	return LatLong{lat, long}
+	return LatLong{Lat: lat, Long: long}
 }
 
 // ToMetatile converts Tile to Metatiles coordinates.
