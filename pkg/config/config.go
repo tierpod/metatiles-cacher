@@ -26,7 +26,7 @@ type Config struct {
 	Sources    []Source   `yaml:"sources"`
 }
 
-// Source returns source configuration from Sources list by given name. If it does not exists,  returns error.
+// Source returns source configuration from Sources list by given name. If it does not exist, return error.
 func (c Config) Source(name string) (Source, error) {
 	for _, v := range c.Sources {
 		if v.Name == name {
