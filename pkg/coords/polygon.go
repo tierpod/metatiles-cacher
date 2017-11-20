@@ -31,3 +31,18 @@ func rayIntersectsSegment(p, a, b LatLong) bool {
 	return (a.Long > p.Long) != (b.Long > p.Long) &&
 		p.Lat < (b.Lat-a.Lat)*(p.Long-a.Long)/(b.Long-a.Long)+a.Lat
 }
+
+// Region is the slice of closed polygons.
+type Region []Polygon
+
+// Contains checks if LatLong point contains in each polygon.
+func (r Region) Contains(pt LatLong) bool {
+	for _, p := range r {
+		inside := p.Contains(pt)
+		if inside {
+			return true
+		}
+	}
+
+	return false
+}
