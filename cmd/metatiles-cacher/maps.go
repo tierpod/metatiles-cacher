@@ -40,22 +40,20 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t.Zoom < source.Zoom.Min || t.Zoom > source.Zoom.Max {
+	minZoom := source.Zoom.Min
+	maxZoom := source.Zoom.Max
+	if source.HasRegion() {
+		if source.Region.Polygons.Contains(t.ToLangLong()) {
+			h.logger.Printf("[DEBUG] Point(%v) inside Region(%v)", t, source.Region.File)
+			minZoom = source.Region.Zoom.Min
+			maxZoom = source.Region.Zoom.Max
+		}
+	}
+
+	if t.Zoom < minZoom || t.Zoom > maxZoom {
 		h.logger.Printf("[ERROR] Wrong zoom level for Source(%v): Zoom(%v)", source.Name, t.Zoom)
 		w.WriteHeader(http.StatusForbidden)
 		return
-	}
-
-	if source.HasRegion() {
-		h.logger.Printf("[DEBUG] Check if tile coords inside given Region(%v)", source.Region.File)
-		for _, p := range source.Region.Polygons {
-			inside := p.Contains(t.ToLangLong())
-			if !inside {
-				h.logger.Printf("[ERROR] Point not in given region %v", t)
-				w.WriteHeader(http.StatusForbidden)
-				return
-			}
-		}
 	}
 
 	mt, err := t.Mimetype()

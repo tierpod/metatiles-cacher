@@ -16,19 +16,27 @@ httpclient:
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
 
 sources:
-  - name: example
-    url: http://example/style/{tile}
-    cache_dir: example
+  # write files to {root_dir}/testsrc1 directory
+  - name: testsrc1
+    url: http://tilesrv1/style/{tile}
 
-  - name: test
-    url: http://test/{tile}?api_key=123
+  # write files to {root_dir}/test directory
+  - name: testsrc2
+    url: http://testsrv2/style/{tile}?api_key=123
     cache_dir: test
 
-  - name: iran
-    url: http://example/style/{tile}
-    cache_dir: example
-    region: 
-      file: regions/iran.kml
+  # write files to {root_dir}/test directory but download from another server
+  - name: testsrc3
+    url: http://testsrv3/style/{tile}
+    cache_dir: test
+    # define zoom levels for this style
     zoom:
       min: 1
       max: 19
+    # redefine zoom levels if point inside this region
+    # yaml generates from geofabrik.de kml file
+    region:
+      file: regions/iran.yaml
+      zoom:
+        min: 1
+        max: 10

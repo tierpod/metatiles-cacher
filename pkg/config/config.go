@@ -94,7 +94,8 @@ func (s Source) HasRegion() bool {
 // Region contains region configuration.
 type Region struct {
 	File     string `yaml:"file"`
-	Polygons []coords.Polygon
+	Zoom     Zoom   `yaml:"zoom"`
+	Polygons coords.Region
 }
 
 func (r *Region) readFile() error {
@@ -112,12 +113,12 @@ func (r *Region) readFile() error {
 	err = yaml.Unmarshal(data, &result)
 
 	// convert yaml struct to coords struct
-	var p []coords.Polygon
+	var region coords.Region
 	for _, v := range result {
-		p = append(p, v.Polygon)
+		region = append(region, v.Polygon)
 	}
 
-	r.Polygons = p
+	r.Polygons = region
 	return nil
 }
 
@@ -147,11 +148,16 @@ func Load(path string) (*Config, error) {
 			c.Sources[i].CacheDir = c.Sources[i].Name
 		}
 
-		// if Source.Region has "File" section, read coordinates from given file to Region.Polygons struct.
 		if c.Sources[i].HasRegion() {
+			// if Source.Region has "File" section read coordinates from given file to Region.Polygons struct
 			err = c.Sources[i].Region.readFile()
 			if err != nil {
 				return nil, err
+			}
+			// if Source.Region.Zoom is not set, use defaults.
+			if c.Sources[i].Region.Zoom.Min == 0 && c.Sources[i].Region.Zoom.Max == 0 {
+				c.Sources[i].Region.Zoom.Min = DefaultMinZoom
+				c.Sources[i].Region.Zoom.Max = DefaultMaxZoom
 			}
 		}
 	}
