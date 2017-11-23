@@ -4,10 +4,11 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-
-	"github.com/tierpod/metatiles-cacher/pkg/coords"
+	"path"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/tierpod/metatiles-cacher/pkg/coords"
 )
 
 const (
@@ -99,23 +100,21 @@ type Region struct {
 }
 
 func (r *Region) readFile() error {
-	type yamlPolygon struct {
-		Polygon coords.Polygon `yaml:"polygon"`
+	var region coords.Region
+	var err error
+
+	fmt.Println(path.Ext(r.File))
+	switch path.Ext(r.File) {
+	case ".yaml", ".yml":
+		region, err = readYAML(r.File)
+	case ".kml":
+		region, err = readKML(r.File)
+	default:
+		return fmt.Errorf("unknown file format")
 	}
 
-	var result []yamlPolygon
-
-	data, err := ioutil.ReadFile(r.File)
 	if err != nil {
 		return err
-	}
-
-	err = yaml.Unmarshal(data, &result)
-
-	// convert yaml struct to coords struct
-	var region coords.Region
-	for _, v := range result {
-		region = append(region, v.Polygon)
 	}
 
 	r.Polygons = region
