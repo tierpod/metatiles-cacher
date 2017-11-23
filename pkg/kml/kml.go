@@ -3,7 +3,6 @@ package kml
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"strconv"
@@ -18,9 +17,9 @@ type KML struct {
 	MultiGeometry MultiGeometry `xml:"Document>Placemark>MultiGeometry"`
 }
 
-// MultiGeometry is the Document>Placemark>MultiGeometry section of kml file. Contains Polygons.
+// MultiGeometry is the Document>Placemark>MultiGeometry section of kml file. Contains Region.
 type MultiGeometry struct {
-	Polygons []Polygon `xml:"Polygon"`
+	Region []Polygon `xml:"Polygon"`
 }
 
 // Polygon is the Document>Placemark>MultiGeometry>Polygon>outerBoundaryIs>LinearRing>coordinates section of kml file.
@@ -44,6 +43,7 @@ func (c *Coordinates) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 
 	for _, s := range strings.Split(strings.TrimSpace(content), "\n") {
 		l := strings.Split(s, ",")
+
 		lat, err := strconv.ParseFloat(l[0], 64)
 		if err != nil {
 			return err
@@ -61,8 +61,8 @@ func (c *Coordinates) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 	return nil
 }
 
-// ExtractPolygons extracts polygons of LinearRing points from kml file.
-func ExtractPolygons(r io.Reader) (coords.Region, error) {
+// ExtractRegion extracts polygons of LinearRing points from kml file.
+func ExtractRegion(r io.Reader) (coords.Region, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -74,24 +74,11 @@ func ExtractPolygons(r io.Reader) (coords.Region, error) {
 		return nil, err
 	}
 
-	// fmt.Printf("ep: %+v\n", kml)
-
-	//var region coords.Region
-	//var polygons []coords.Polygon
-	//for _, p := range kml.MultiGeometry.Polygons {
-	//fmt.Println(k, v)
-	//for _, c := range strings.Split(p.Coordinates, "\n") {
-	//fmt.Println(kk, s)
-	//polygons = apend(polygons, c)
-
-	//}
-	//region = append(region, polygons)
-	//}
-
-	//var region coords.Region
-	for _, p := range kml.MultiGeometry.Polygons {
-		fmt.Printf("polygon: %+v\n", p)
+	var region coords.Region
+	for _, p := range kml.MultiGeometry.Region {
+		polygon := coords.Polygon(p.Coordinates)
+		region = append(region, polygon)
 	}
 
-	return nil, nil
+	return region, nil
 }
