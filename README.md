@@ -38,6 +38,12 @@ Based on
 * [gosm library][3]
 
 
+Region files
+------------
+
+Regions can be kml files downloaded from geofabrik.de. Or you can convert this kml files to yaml.
+Examples can be found at pkg/config/testdata directory.
+
 
 [1]: http://leafletjs.com
 [2]: https://github.com/sputnik-maps/gopnik

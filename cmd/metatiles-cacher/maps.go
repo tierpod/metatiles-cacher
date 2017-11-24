@@ -42,6 +42,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	minZoom := source.Zoom.Min
 	maxZoom := source.Zoom.Max
+	// if t.Zoom > maxZoom && source.HasRegion() { // only if tile max zoom always > region max zoom
 	if source.HasRegion() {
 		if source.Region.Polygons.Contains(t.ToLangLong()) {
 			h.logger.Printf("[DEBUG] Point(%v) inside Region(%v)", t, source.Region.File)
