@@ -44,12 +44,12 @@ func (c *Coordinates) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 	for _, s := range strings.Split(strings.TrimSpace(content), "\n") {
 		l := strings.Split(s, ",")
 
-		lat, err := strconv.ParseFloat(l[0], 64)
+		long, err := strconv.ParseFloat(l[0], 64)
 		if err != nil {
 			return err
 		}
 
-		long, err := strconv.ParseFloat(l[1], 64)
+		lat, err := strconv.ParseFloat(l[1], 64)
 		if err != nil {
 			return err
 		}
