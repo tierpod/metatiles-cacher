@@ -1,4 +1,4 @@
-cache:
+service:
   bind: localhost:8080
   use_writer: true # write to cache?
   use_source: true # get tiles from remote sources?
