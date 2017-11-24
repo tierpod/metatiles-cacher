@@ -1,4 +1,5 @@
-// Package kml provides function for reading kml files from geofabrik.de
+// Package kml provides function for reading kml files from geofabrik.de and extracting Region
+// information.
 package kml
 
 import (
@@ -25,7 +26,6 @@ type MultiGeometry struct {
 // Polygon is the Document>Placemark>MultiGeometry>Polygon>outerBoundaryIs>LinearRing>coordinates section of kml file.
 // Contains Coordinates.
 type Polygon struct {
-	//Coordinates string `xml:"outerBoundaryIs>LinearRing>coordinates"`
 	Coordinates Coordinates `xml:"outerBoundaryIs>LinearRing>coordinates"`
 }
 
