@@ -1,39 +1,103 @@
 package config
 
-/*func TestSourceInfo(t *testing.T) {
-	source1 := Source{Name: "style1", URL: "http://test1/style1/%v"}
-	source2 := Source{Name: "style2", URL: "http://test2/style2/%v"}
-	service := Service{Sources: []Source{source1, source2}}
+import (
+	"fmt"
+	"reflect"
+	"testing"
+)
 
-	validName := "style1"
-	validURL := "http://test1/style1/%v"
-	name, url, err := service.SourceInfo("style1")
+func TestLoad(t *testing.T) {
+	// file not found
+	_, err := Load("testdata/notfound")
+	if err.Error() != "read config: open testdata/notfound: no such file or directory" {
+		t.Errorf("Load: expected \"no such file\" error, got %v", err)
+	}
+
+	// unmarshal error
+	_, err = Load("testdata/config2.yaml")
+	if err.Error() != "unmarshal config: yaml: line 3: could not find expected ':'" {
+		t.Errorf("Load: expected \"unmarshal error\" error, got %v", err)
+	}
+
+	// unknown region format
+	_, err = Load("testdata/config3.yaml")
+	if err != nil && err.Error() != "readFile: unknown file format: .unknown" {
+		t.Errorf("Load: expected \"unknown format\" error, got %v", err)
+	}
+
+	_, err = Load("testdata/config.yaml")
 	if err != nil {
-		t.Errorf("SourceInfo: got error %v", err)
+		t.Errorf("Load: expected no error, got %v", err)
 	}
-	if name != validName || url != validURL {
-		t.Errorf("SourceInfo: expected {name:%v style:%v}, got: {name:%v style:%v}", validName, validURL, name, url)
+	//fmt.Printf("%+v\n", config)
+}
+
+func TestSource(t *testing.T) {
+	testSource := Source{
+		Name:     "testsrc1",
+		URL:      "http://tilesrv1/style/{tile}",
+		CacheDir: "testsrc1",
+		Zoom: Zoom{
+			Min: 1,
+			Max: 18,
+		},
 	}
 
-	invalidName := "notexist"
-	invalidErr := fmt.Sprintf("source for style %v not found", invalidName)
-	_, _, err = service.SourceInfo(invalidName)
-	if err.Error() != invalidErr {
-		t.Errorf("SourceInfo: expected err \"%v\", got \"%v\"", invalidErr, err.Error())
+	config, _ := Load("testdata/config.yaml")
+	// source not found
+	_, err := config.Source("notfound")
+	if err == nil {
+		t.Errorf("Source: expected \"source not found\" error, got nil")
+	}
+	// source found
+	source, err := config.Source("testsrc1")
+	if err != nil {
+		t.Errorf("Source: expected no error, got %v", err)
+	}
+	if !reflect.DeepEqual(testSource, source) {
+		t.Errorf("Source: testSource(%+v) != source(%+v)", testSource, source)
 	}
 }
 
-func TestSourcesToMap(t *testing.T) {
-	source1 := Source{Name: "style1", URL: "http://test1/style1/%v"}
-	source2 := Source{Name: "style2", URL: "http://test2/style2/%v"}
-	service := Service{Sources: []Source{source1, source2}}
-
-	result := make(map[string]string)
-	result["style1"] = "http://test1/style1/%v"
-	result["style2"] = "http://test2/style2/%v"
-
-	got := service.sourcesToMap()
-	if !reflect.DeepEqual(got, result) {
-		t.Errorf("SourcesToMap: expected %v, got %v", result, got)
+func ExampleLoad() {
+	config, _ := Load("testdata/config.yaml")
+	for _, s := range config.Sources {
+		fmt.Printf("source.Name: '%v'\n", s.Name)
+		fmt.Printf("source.URL: '%v'\n", s.URL)
+		fmt.Printf("source.CacheDir: '%v'\n", s.CacheDir)
+		fmt.Printf("source.Zoom: %+v\n", s.Zoom)
+		fmt.Printf("source.Region.File: '%v'\n", s.Region.File)
+		fmt.Printf("source.Region.Zoom: %+v\n", s.Region.Zoom)
+		fmt.Println("---")
 	}
-}*/
+
+	// Output:
+	// source.Name: 'testsrc1'
+	// source.URL: 'http://tilesrv1/style/{tile}'
+	// source.CacheDir: 'testsrc1'
+	// source.Zoom: {Min:1 Max:18}
+	// source.Region.File: ''
+	// source.Region.Zoom: {Min:0 Max:0}
+	// ---
+	// source.Name: 'testsrc2'
+	// source.URL: 'http://testsrv2/style/{tile}?api_key=123'
+	// source.CacheDir: 'test'
+	// source.Zoom: {Min:1 Max:18}
+	// source.Region.File: ''
+	// source.Region.Zoom: {Min:0 Max:0}
+	// ---
+	// source.Name: 'testsrc3'
+	// source.URL: 'http://testsrv3/style/{tile}'
+	// source.CacheDir: 'test'
+	// source.Zoom: {Min:1 Max:19}
+	// source.Region.File: 'testdata/test_region.yaml'
+	// source.Region.Zoom: {Min:1 Max:10}
+	// ---
+	// source.Name: 'testsrc4'
+	// source.URL: 'http://testsrv4/style/{tile}'
+	// source.CacheDir: 'test'
+	// source.Zoom: {Min:1 Max:19}
+	// source.Region.File: 'testdata/test_region.kml'
+	// source.Region.Zoom: {Min:1 Max:18}
+	// ---
+}

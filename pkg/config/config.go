@@ -103,18 +103,17 @@ func (r *Region) readFile() error {
 	var region coords.Region
 	var err error
 
-	fmt.Println(path.Ext(r.File))
 	switch path.Ext(r.File) {
 	case ".yaml", ".yml":
 		region, err = readYAML(r.File)
 	case ".kml":
 		region, err = readKML(r.File)
 	default:
-		return fmt.Errorf("unknown file format")
+		return fmt.Errorf("readFile: unknown file format: %v", path.Ext(r.File))
 	}
 
 	if err != nil {
-		return err
+		return fmt.Errorf("readFile: %v", err)
 	}
 
 	r.Polygons = region
