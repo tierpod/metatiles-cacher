@@ -15,7 +15,7 @@ Contains slippy-map based on [LeafLet][1] for png tiles. For vector tiles, you c
 
 ```
   request  +------+  not found   +------+
-+---------->reader+-------+----->+source|
++---------->reader+-------+------>source|
            +---^--+       |      +---+--+
                |          |          |
                |          |          |download
@@ -37,6 +37,33 @@ Based on
 * [gopnik tile server][2]
 * [gosm library][3]
 
+
+Entrypoints
+-----------
+
+* http://localhost:8080/static/ - slippy-map.
+
+* http://localhost:8080/maps/{style}/{z}/{x}/{y}.{ext} - read tile from metatiles cache. If tile not
+  found in cache, fetch from remote source and write to cache.
+
+  Returns http status:
+
+  * StatusInternalServerError - if error occured
+  * StatusNotFound - if tile not found in the source, or unknown mimetype
+  * StatusNotModified - if tile not modified since last request
+  * StatusForbidden - if tile has wrong zoom level
+  * StatusOK - if tile serves successful
+
+* http://localhost:8080/fetch/{style}/{z}/{x}/{y}.{ext} - fetch tile from remote source and write to
+  metatiles cache.
+
+  Returns http status:
+
+  * StatusInternalServerError - if error occured
+  * StatusNotFound - if tile not found in the source, or unknown mimetype
+  * StatusForbidden - if tile has wrong zoom level
+  * StatusCreated - if tile already in the fetch queue (try later)
+  * StatusOK - if tile serves successful
 
 Region files
 ------------

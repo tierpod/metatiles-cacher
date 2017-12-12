@@ -51,6 +51,7 @@ func main() {
 	}
 
 	uq := queue.NewUniq()
+	uqf := queue.NewUniq()
 
 	http.Handle("/status", handler.LogConnection(
 		handler.XToken(
@@ -66,6 +67,13 @@ func main() {
 			cache:  fc,
 			cfg:    cfg,
 			queue:  uq,
+		}, logger))
+	http.Handle("/fetch/", handler.LogConnection(
+		fetchHandler{
+			logger: logger,
+			cache:  fc,
+			cfg:    cfg,
+			queue:  uqf,
 		}, logger))
 
 	logger.Printf("Starting web server on: %v", cfg.Service.Bind)
