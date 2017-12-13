@@ -97,5 +97,9 @@ func (fc *FileCache) Write(m coords.Metatile, dir string, data [][]byte) error {
 		return fmt.Errorf("FileCache: %v", err)
 	}
 
+	if err := os.Chmod(path, 0666); err != nil {
+		return fmt.Errorf("FileCache: %v", err)
+	}
+
 	return nil
 }
