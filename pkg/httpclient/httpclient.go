@@ -1,10 +1,14 @@
-// Package httpclient contains functions for send http requests
+// Package httpclient contains functions for fetching data via http
 package httpclient
 
 import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/tierpod/metatiles-cacher/pkg/coords"
 )
 
 // Get gets data by url
@@ -32,5 +36,25 @@ func Get(url, ua string) (data []byte, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("httpclient/Get: %v", err)
 	}
+	return data, nil
+}
+
+// FetchMetatileData fetchs metatile data inside xybox coordinates for given zoom and ext.
+func FetchMetatileData(xybox coords.XYBox, zoom int, ext, sURL, ua string) (coords.MetatileData, error) {
+	var data coords.MetatileData
+
+	for _, x := range xybox.X {
+		for _, y := range xybox.Y {
+			mo := coords.XYToMetatileOffset(x, y)
+			tile := strconv.Itoa(zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + `.` + ext
+			url := strings.Replace(sURL, "{tile}", tile, 1)
+			res, err := Get(url, ua)
+			if err != nil {
+				return data, err
+			}
+			data[mo] = res
+		}
+	}
+
 	return data, nil
 }

@@ -162,3 +162,9 @@ func NewMetatileFromURL(url string) (m Metatile, style string, err error) {
 
 	return m, style, nil
 }
+
+// XYToMetatileOffset calculates data offset for x, y coordinates inside metatile file.
+func XYToMetatileOffset(x, y int) int {
+	mask := MaxMetatileSize - 1
+	return (x&mask)*MaxMetatileSize + (y & mask)
+}

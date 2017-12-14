@@ -1,4 +1,6 @@
 // Package metatile provides functions for decoding and encoding metatile files.
+//
+// Metatile format description: https://github.com/openstreetmap/mod_tile/blob/master/src/metatile.cpp
 package metatile
 
 import (
@@ -55,25 +57,27 @@ func encodeHeader(w io.Writer, ml *metaLayout) error {
 	return nil
 }
 
-// Encode encodes tiles to metatile and writes it to w.
-func Encode(w io.Writer, m coords.Metatile, tiles [][]byte) error {
-	// f.write(struct.pack("4s4i", META_MAGIC, METATILE * METATILE, x, y, z))
+// Encode encodes data to metatile and writes it to w.
+func Encode(w io.Writer, m coords.Metatile, data coords.MetatileData) error {
+	mSize := coords.MaxMetatileSize * coords.MaxMetatileSize
+
+	if len(data) < mSize {
+		return fmt.Errorf("data size: %v < %v", len(data), mSize)
+	}
+
 	x, y := m.MinXY()
 	ml := &metaLayout{
 		Magic: []byte{'M', 'E', 'T', 'A'},
-		Count: int32(len(tiles)),
+		Count: int32(mSize),
 		X:     int32(x),
 		Y:     int32(y),
 		Z:     int32(m.Zoom),
 	}
-	// golang        |renderd.py
-	// 20            |len(META_MAGIC) + 4 * 4
-	// 8*len(tiles)  |(2 * 4) * (METATILE * METATILE)
-	offset := int32(20 + 8*len(tiles))
-	//size := t.ConvertToMeta().Size() // detect on zoom level?
+	offset := int32(20 + 8*mSize)
 
-	for i := 0; i < len(tiles); i++ {
-		tile := tiles[i]
+	// calculate offsets and sizes
+	for i := 0; i < mSize; i++ {
+		tile := data[i]
 		s := int32(len(tile))
 		if s > MaxEntrySize {
 			return fmt.Errorf("entry size > MaxEntrySize (size: %v)", s)
@@ -86,12 +90,16 @@ func Encode(w io.Writer, m coords.Metatile, tiles [][]byte) error {
 		offset += s
 	}
 
+	// fmt.Printf("%+v\n", ml)
+
+	// encode and write headers
 	if err := encodeHeader(w, ml); err != nil {
 		return fmt.Errorf("metatile/encodeHeader: %v", err)
 	}
 
-	for i := 0; i < len(tiles); i++ {
-		tile := tiles[i]
+	// encode and write data
+	for i := 0; i < len(data); i++ {
+		tile := data[i]
 
 		if _, err := w.Write(tile); err != nil {
 			return fmt.Errorf("metatile/write: %v", err)

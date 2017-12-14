@@ -203,3 +203,15 @@ func ExampleNewMetatileFromURL() {
 	// Output:
 	// Metatile{Zoom:10 Hashes:[0 0 0 0 128]} style
 }
+
+func ExampleXYToMetatileOffset() {
+	for x := 0; x <= 2; x++ {
+		for y := 0; y <= 2; y++ {
+			mo := XYToMetatileOffset(x, y)
+			fmt.Printf("%v ", mo)
+		}
+	}
+
+	// Output:
+	// 0 1 2 8 9 10 16 17 18
+}

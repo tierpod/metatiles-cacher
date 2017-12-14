@@ -145,26 +145,21 @@ func (h mapsHandler) fetchAndWrite(m coords.Metatile, style, ext, cacheDir, sURL
 	h.logger.Printf("Fetch Style(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
 		style, m.Zoom, xybox.X[0], xybox.X[len(xybox.X)-1], xybox.Y[0], xybox.Y[len(xybox.Y)-1], sURL)
 
-	var data [][]byte
-	for _, x := range xybox.X {
-		for _, y := range xybox.Y {
-			tile := strconv.Itoa(m.Zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + `.` + ext
-			url := strings.Replace(sURL, "{tile}", tile, 1)
-			// fc.logger.Printf("[DEBUG] Filecache/fetchAndWrite: Fetch %v", url)
-			res, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
-			if err != nil {
-				h.logger.Printf("[ERROR] fetchAndWrite: %v", err)
-				return fmt.Errorf("fetchAndWrite: %v", err)
-			}
-			data = append(data, res)
-		}
+	data, err := httpclient.FetchMetatileData(xybox, m.Zoom, ext, sURL, h.cfg.HTTPClient.UserAgent)
+	if err != nil {
+		return err
 	}
 
-	err := h.cache.Write(m, cacheDir, data)
+	err = h.cache.Write(m, cacheDir, data)
 	if err != nil {
 		h.logger.Printf("[ERROR] fetchAndWrite: %v", err)
 		return fmt.Errorf("fetchAndWrite: %v", err)
 	}
 
 	return nil
+}
+
+func xyToMetaIndex(x, y int) int {
+	mask := coords.MaxMetatileSize - 1
+	return (x&mask)*coords.MaxMetatileSize + (y & mask)
 }

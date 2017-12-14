@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
@@ -85,20 +83,12 @@ func (h fetchHandler) fetchAndWrite(m coords.Metatile, style, ext, cacheDir, sUR
 	h.logger.Printf("Fetch Style(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
 		style, m.Zoom, xybox.X[0], xybox.X[len(xybox.X)-1], xybox.Y[0], xybox.Y[len(xybox.Y)-1], sURL)
 
-	var data [][]byte
-	for _, x := range xybox.X {
-		for _, y := range xybox.Y {
-			tile := strconv.Itoa(m.Zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + `.` + ext
-			url := strings.Replace(sURL, "{tile}", tile, 1)
-			res, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
-			if err != nil {
-				return fmt.Errorf("fetchAndWrite: %v", err)
-			}
-			data = append(data, res)
-		}
+	data, err := httpclient.FetchMetatileData(xybox, m.Zoom, ext, sURL, h.cfg.HTTPClient.UserAgent)
+	if err != nil {
+		return err
 	}
 
-	err := h.cache.Write(m, cacheDir, data)
+	err = h.cache.Write(m, cacheDir, data)
 	if err != nil {
 		return fmt.Errorf("fetchAndWrite: %v", err)
 	}

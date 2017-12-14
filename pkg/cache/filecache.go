@@ -35,7 +35,7 @@ func NewFileCache(cfg config.FileCache, logger *log.Logger) (*FileCache, error) 
 }
 
 // Read reads tile data from metatile.
-func (fc *FileCache) Read(t coords.Tile, dir string) (data []byte, err error) {
+func (fc *FileCache) Read(t coords.Tile, dir string) (data coords.TileData, err error) {
 	path := fc.cfg.RootDir + "/" + dir + "/" + t.ToMetatile().Path()
 	fc.logger.Printf("[DEBUG] FileCache: read %v from metatile %v", t, path)
 
@@ -67,7 +67,7 @@ func (fc *FileCache) Check(t coords.Tile, dir string) (found bool, mtime time.Ti
 }
 
 // Write writes metatile data to disk.
-func (fc *FileCache) Write(m coords.Metatile, dir string, data [][]byte) error {
+func (fc *FileCache) Write(m coords.Metatile, dir string, data coords.MetatileData) error {
 	path := fc.cfg.RootDir + "/" + dir + "/" + m.Path()
 	fc.logger.Printf("FileCache: write %v", path)
 
