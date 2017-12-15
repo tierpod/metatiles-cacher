@@ -21,8 +21,7 @@ type mapsHandler struct {
 	logger *log.Logger
 	cache  cache.ReadWriter
 	cfg    *config.Config
-
-	queue *queue.Uniq
+	queue  *queue.Uniq
 }
 
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +59,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mt, err := util.Mimetype(t.Ext)
+	mimetype, err := util.Mimetype(t.Ext)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v", err)
 		w.WriteHeader(http.StatusNotFound)
@@ -71,13 +70,13 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// found in cache
 	if found {
 		etag := `"` + util.DigestString(mtime.String()) + `"`
-		h.replyFromCache(w, t, mt, etag, r.Header.Get("If-None-Match"))
+		h.replyFromCache(w, t, mimetype, etag, r.Header.Get("If-None-Match"))
 		return
 	}
 
 	// not found in cache
 	if h.cfg.Service.UseSource {
-		h.replyFromSource(w, t, source.URL, mt)
+		h.replyFromSource(w, t, source.URL, mimetype)
 	}
 
 	// fetch tiles for metatile and write to cache?
@@ -98,7 +97,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h mapsHandler) replyFromCache(w http.ResponseWriter, t tile.Tile, mt, etag, ifNoneMatch string) {
+func (h mapsHandler) replyFromCache(w http.ResponseWriter, t tile.Tile, mimetype, etag, ifNoneMatch string) {
 	w.Header().Set("Etag", etag)
 	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Service.MaxAge))
 
@@ -115,13 +114,13 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, t tile.Tile, mt, etag
 		return
 	}
 
-	w.Header().Set("Content-Type", mt)
+	w.Header().Set("Content-Type", mimetype)
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.Write(data)
 	return
 }
 
-func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, sURL, mt string) {
+func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, sURL, mimetype string) {
 	tile := fmt.Sprintf("%v/%v/%v%v", t.Zoom, t.X, t.Y, t.Ext)
 	url := strings.Replace(sURL, "{tile}", tile, 1)
 	h.logger.Printf("replyFromSource: get from URL(%v)", url)
@@ -133,21 +132,17 @@ func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, sURL, m
 		return
 	}
 
-	w.Header().Set("Content-Type", mt)
+	w.Header().Set("Content-Type", mimetype)
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.Write(data)
 	return
 }
 
-func (h mapsHandler) fetchAndWrite(mt metatile.Metatile, ext, sURL, qkey string) error {
+func (h mapsHandler) fetchAndWrite(mt metatile.Metatile, ext, sURL, key string) error {
 	defer func() {
-		h.logger.Printf("fetchAndWrite: done, del from queue: %v", qkey)
-		h.queue.Del(qkey)
+		h.logger.Printf("fetchAndWrite: done, del from queue: %v", key)
+		h.queue.Del(key)
 	}()
-
-	xybox := mt.XYBox()
-	h.logger.Printf("fetchAndWrite: fetch Map(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
-		mt.Map, mt.Zoom, xybox.X[0], xybox.X[len(xybox.X)-1], xybox.Y[0], xybox.Y[len(xybox.Y)-1], sURL)
 
 	data, err := httpclient.FetchMetatile(mt, ext, sURL, h.cfg.HTTPClient.UserAgent)
 	if err != nil {

@@ -18,8 +18,7 @@ type fetchHandler struct {
 	logger *log.Logger
 	cache  cache.ReadWriter
 	cfg    *config.Config
-
-	queue *queue.Uniq
+	queue  *queue.Uniq
 }
 
 func (h fetchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -58,12 +57,12 @@ func (h fetchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !h.queue.Add(key) {
 		// TODO: wait to end fetching
-		h.logger.Printf("[DEBUG] Already in queue, skip: %v", key)
+		h.logger.Printf("[DEBUG] already in queue, skip: %v", key)
 		w.WriteHeader(http.StatusCreated)
 		return
 	}
 
-	h.logger.Printf("[DEBUG] Add to queue: %v", key)
+	h.logger.Printf("[DEBUG] add to queue: %v", key)
 	err = h.fetchAndWrite(mt, t.Ext, source.URL, key)
 	if err != nil {
 		h.logger.Printf("[ERROR]: %v", err)
@@ -75,15 +74,11 @@ func (h fetchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h fetchHandler) fetchAndWrite(mt metatile.Metatile, ext, sURL, qkey string) error {
+func (h fetchHandler) fetchAndWrite(mt metatile.Metatile, ext, sURL, key string) error {
 	defer func() {
-		h.logger.Printf("Done, del from queue: %v", qkey)
-		h.queue.Del(qkey)
+		h.logger.Printf("done, del from queue: %v", key)
+		h.queue.Del(key)
 	}()
-
-	xybox := mt.XYBox()
-	h.logger.Printf("Fetch Map(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
-		mt.Map, mt.Zoom, xybox.X[0], xybox.X[len(xybox.X)-1], xybox.Y[0], xybox.Y[len(xybox.Y)-1], sURL)
 
 	data, err := httpclient.FetchMetatile(mt, ext, sURL, h.cfg.HTTPClient.UserAgent)
 	if err != nil {
