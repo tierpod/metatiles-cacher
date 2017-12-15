@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tierpod/metatiles-cacher/pkg/coords"
+	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 )
 
 // Get gets data by url
@@ -39,20 +39,21 @@ func Get(url, ua string) (data []byte, err error) {
 	return data, nil
 }
 
-// FetchMetatileData fetchs metatile data inside xybox coordinates for given zoom and ext.
-func FetchMetatileData(xybox coords.XYBox, zoom int, ext, sURL, ua string) (coords.MetatileData, error) {
-	var data coords.MetatileData
+// FetchMetatile fetchs metatile data from xybox coordinates for given metatile.
+func FetchMetatile(m metatile.Metatile, ext, sURL, ua string) (metatile.Data, error) {
+	var data metatile.Data
+	xybox := m.XYBox()
 
 	for _, x := range xybox.X {
 		for _, y := range xybox.Y {
-			mo := coords.XYToMetatileOffset(x, y)
-			tile := strconv.Itoa(zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + `.` + ext
+			offset := metatile.XYOffset(x, y)
+			tile := strconv.Itoa(m.Zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + ext
 			url := strings.Replace(sURL, "{tile}", tile, 1)
 			res, err := Get(url, ua)
 			if err != nil {
 				return data, err
 			}
-			data[mo] = res
+			data[offset] = res
 		}
 	}
 

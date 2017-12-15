@@ -4,15 +4,15 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/tierpod/metatiles-cacher/pkg/coords"
 	"github.com/tierpod/metatiles-cacher/pkg/kml"
+	"github.com/tierpod/metatiles-cacher/pkg/polygon"
 	"gopkg.in/yaml.v2"
 )
 
 // readYAML reads yaml file and convert it to coords.Region.
-func readYAML(path string) (coords.Region, error) {
+func readYAML(path string) (polygon.Region, error) {
 	type yamlPolygon struct {
-		Polygon coords.Polygon `yaml:"polygon"`
+		Polygon polygon.Polygon `yaml:"polygon"`
 	}
 
 	var result []yamlPolygon
@@ -28,7 +28,7 @@ func readYAML(path string) (coords.Region, error) {
 	}
 
 	// convert yaml struct to coords struct
-	var region coords.Region
+	var region polygon.Region
 	for _, v := range result {
 		region = append(region, v.Polygon)
 	}
@@ -37,7 +37,7 @@ func readYAML(path string) (coords.Region, error) {
 }
 
 // readKML reads kml file from geofabric.de and convert it to coords.Region.
-func readKML(path string) (coords.Region, error) {
+func readKML(path string) (polygon.Region, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err

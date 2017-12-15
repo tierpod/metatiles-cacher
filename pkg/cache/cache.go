@@ -4,18 +4,19 @@ package cache
 import (
 	"time"
 
-	"github.com/tierpod/metatiles-cacher/pkg/coords"
+	"github.com/tierpod/metatiles-cacher/pkg/metatile"
+	"github.com/tierpod/metatiles-cacher/pkg/tile"
 )
 
 // Reader provides interface for read tile data from metatiles cache.
 type Reader interface {
-	Read(t coords.Tile, dir string) (data coords.TileData, err error)
-	Check(t coords.Tile, dir string) (found bool, mtime time.Time)
+	Read(t tile.Tile) (data tile.Data, err error)
+	Check(t tile.Tile) (found bool, mtime time.Time)
 }
 
 // Writer provides interface for write metatile data data to cache.
 type Writer interface {
-	Write(m coords.Metatile, dir string, data coords.MetatileData) error
+	Write(m metatile.Metatile, data metatile.Data) error
 }
 
 // ReadWriter includes Reader and Writer interfaces.

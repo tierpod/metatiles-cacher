@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"path"
 
-	"gopkg.in/yaml.v2"
+	"github.com/tierpod/metatiles-cacher/pkg/polygon"
 
-	"github.com/tierpod/metatiles-cacher/pkg/coords"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -96,11 +96,11 @@ func (s Source) HasRegion() bool {
 type Region struct {
 	File     string `yaml:"file"`
 	Zoom     Zoom   `yaml:"zoom"`
-	Polygons coords.Region
+	Polygons polygon.Region
 }
 
 func (r *Region) readFile() error {
-	var region coords.Region
+	var region polygon.Region
 	var err error
 
 	switch path.Ext(r.File) {

@@ -9,9 +9,11 @@ import (
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
-	"github.com/tierpod/metatiles-cacher/pkg/coords"
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
+	"github.com/tierpod/metatiles-cacher/pkg/latlong"
+	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 	"github.com/tierpod/metatiles-cacher/pkg/queue"
+	"github.com/tierpod/metatiles-cacher/pkg/tile"
 	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
@@ -24,16 +26,16 @@ type mapsHandler struct {
 }
 
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t, style, err := coords.NewTileFromURL(r.URL.Path)
+	t, err := tile.NewFromURL(r.URL.Path)
 	if err != nil {
-		h.logger.Printf("[ERROR] Wrong request: %v", err)
+		h.logger.Printf("[ERROR] wrong request: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	h.logger.Printf("[DEBUG] Got request %v style(%v)", t, style)
+	h.logger.Printf("[DEBUG] got request %v", t)
 
-	source, err := h.cfg.Source(style)
+	source, err := h.cfg.Source(t.Map)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v", err)
 		w.WriteHeader(http.StatusNotFound)
@@ -44,7 +46,8 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	maxZoom := source.Zoom.Max
 	// if t.Zoom > maxZoom && source.HasRegion() { // only if tile max zoom always > region max zoom
 	if source.HasRegion() {
-		if source.Region.Polygons.Contains(t.ToLangLong()) {
+		ll := latlong.New(t.Zoom, t.X, t.Y)
+		if source.Region.Polygons.Contains(ll) {
 			h.logger.Printf("[DEBUG] Point(%v) inside Region(%v)", t, source.Region.File)
 			minZoom = source.Region.Zoom.Min
 			maxZoom = source.Region.Zoom.Max
@@ -52,23 +55,23 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if t.Zoom < minZoom || t.Zoom > maxZoom {
-		h.logger.Printf("[ERROR] Wrong zoom level for Source(%v): Zoom(%v)", source.Name, t.Zoom)
+		h.logger.Printf("[ERROR] wrong zoom level for Source(%v): Zoom(%v)", source.Name, t.Zoom)
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	mt, err := t.Mimetype()
+	mt, err := util.Mimetype(t.Ext)
 	if err != nil {
 		h.logger.Printf("[ERROR] %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	found, mtime := h.cache.Check(t, source.CacheDir)
+	found, mtime := h.cache.Check(t)
 	// found in cache
 	if found {
 		etag := `"` + util.DigestString(mtime.String()) + `"`
-		h.replyFromCache(w, t, source.CacheDir, mt, etag, r.Header.Get("If-None-Match"))
+		h.replyFromCache(w, t, mt, etag, r.Header.Get("If-None-Match"))
 		return
 	}
 
@@ -79,35 +82,35 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// fetch tiles for metatile and write to cache?
 	if h.cfg.Service.UseWriter {
-		m := t.ToMetatile()
-		qkey := style + "/" + m.Path()
+		mt := metatile.NewFromTile(t)
+		key := mt.Filepath("")
 
-		if h.queue.Add(qkey) {
-			h.logger.Printf("[DEBUG] Add to queue: %v", qkey)
-			go h.fetchAndWrite(m, style, t.Ext, source.CacheDir, source.URL, qkey)
+		if h.queue.Add(key) {
+			h.logger.Printf("[DEBUG] add to queue: %v", key)
+			go h.fetchAndWrite(mt, t.Ext, source.URL, key)
 			return
 		}
 
-		h.logger.Printf("[DEBUG] Already in queue, skip: %v", qkey)
+		h.logger.Printf("[DEBUG] already in queue, skip: %v", key)
 		return
 	}
 
 	return
 }
 
-func (h mapsHandler) replyFromCache(w http.ResponseWriter, t coords.Tile, dir, mt, etag, ifNoneMatch string) {
+func (h mapsHandler) replyFromCache(w http.ResponseWriter, t tile.Tile, mt, etag, ifNoneMatch string) {
 	w.Header().Set("Etag", etag)
 	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%v", h.cfg.Service.MaxAge))
 
 	if ifNoneMatch == etag {
-		h.logger.Printf("[DEBUG] File not modified: Etag(%v) == If-None-Match(%v)", etag, ifNoneMatch)
+		h.logger.Printf("[DEBUG] replyFromCache: file not modified: Etag(%v) == If-None-Match(%v)", etag, ifNoneMatch)
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 
-	data, err := h.cache.Read(t, dir)
+	data, err := h.cache.Read(t)
 	if err != nil {
-		h.logger.Printf("[ERROR] %v", err)
+		h.logger.Printf("[ERROR] replyFromCache: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -118,13 +121,14 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, t coords.Tile, dir, m
 	return
 }
 
-func (h mapsHandler) replyFromSource(w http.ResponseWriter, t coords.Tile, sURL, mt string) {
-	url := strings.Replace(sURL, "{tile}", t.Path(), 1)
-	h.logger.Printf("Get from source URL(%v)", url)
+func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, sURL, mt string) {
+	tile := fmt.Sprintf("%v/%v/%v%v", t.Zoom, t.X, t.Y, t.Ext)
+	url := strings.Replace(sURL, "{tile}", tile, 1)
+	h.logger.Printf("replyFromSource: get from URL(%v)", url)
 
 	data, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
 	if err != nil {
-		h.logger.Printf("[ERROR] %v", err)
+		h.logger.Printf("[ERROR] replyFromSource: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -135,31 +139,25 @@ func (h mapsHandler) replyFromSource(w http.ResponseWriter, t coords.Tile, sURL,
 	return
 }
 
-func (h mapsHandler) fetchAndWrite(m coords.Metatile, style, ext, cacheDir, sURL, qkey string) error {
+func (h mapsHandler) fetchAndWrite(mt metatile.Metatile, ext, sURL, qkey string) error {
 	defer func() {
-		h.logger.Printf("Done, del from queue: %v", qkey)
+		h.logger.Printf("fetchAndWrite: done, del from queue: %v", qkey)
 		h.queue.Del(qkey)
 	}()
 
-	xybox := m.ToXYBox()
-	h.logger.Printf("Fetch Style(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
-		style, m.Zoom, xybox.X[0], xybox.X[len(xybox.X)-1], xybox.Y[0], xybox.Y[len(xybox.Y)-1], sURL)
+	xybox := mt.XYBox()
+	h.logger.Printf("fetchAndWrite: fetch Map(%v) Zoom(%v) X(%v-%v) Y(%v-%v) Source(%v)",
+		mt.Map, mt.Zoom, xybox.X[0], xybox.X[len(xybox.X)-1], xybox.Y[0], xybox.Y[len(xybox.Y)-1], sURL)
 
-	data, err := httpclient.FetchMetatileData(xybox, m.Zoom, ext, sURL, h.cfg.HTTPClient.UserAgent)
+	data, err := httpclient.FetchMetatile(mt, ext, sURL, h.cfg.HTTPClient.UserAgent)
 	if err != nil {
 		return err
 	}
 
-	err = h.cache.Write(m, cacheDir, data)
+	err = h.cache.Write(mt, data)
 	if err != nil {
-		h.logger.Printf("[ERROR] fetchAndWrite: %v", err)
-		return fmt.Errorf("fetchAndWrite: %v", err)
+		return fmt.Errorf("[ERROR] fetchAndWrite: %v", err)
 	}
 
 	return nil
-}
-
-func xyToMetaIndex(x, y int) int {
-	mask := coords.MaxMetatileSize - 1
-	return (x&mask)*coords.MaxMetatileSize + (y & mask)
 }

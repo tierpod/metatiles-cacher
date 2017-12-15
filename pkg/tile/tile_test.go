@@ -12,6 +12,6 @@ func ExampleTile_Filepath() {
 	fmt.Println(tilepath)
 
 	// Output:
-	// mapname/1/1/1/.png
-	// /var/cache/tile/mapname/1/1/1/.png
+	// mapname/1/1/1.png
+	// /var/cache/tile/mapname/1/1/1.png
 }

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/tierpod/metatiles-cacher/pkg/config"
-	"github.com/tierpod/metatiles-cacher/pkg/coords"
 	"github.com/tierpod/metatiles-cacher/pkg/metatile"
+	"github.com/tierpod/metatiles-cacher/pkg/tile"
 )
 
 // FileCache is the file cache struct, contains self configuration (RootDir) and logger. Implemets
@@ -35,8 +35,9 @@ func NewFileCache(cfg config.FileCache, logger *log.Logger) (*FileCache, error) 
 }
 
 // Read reads tile data from metatile.
-func (fc *FileCache) Read(t coords.Tile, dir string) (data coords.TileData, err error) {
-	path := fc.cfg.RootDir + "/" + dir + "/" + t.ToMetatile().Path()
+func (fc *FileCache) Read(t tile.Tile) (data tile.Data, err error) {
+	mt := metatile.NewFromTile(t)
+	path := mt.Filepath(fc.cfg.RootDir)
 	fc.logger.Printf("[DEBUG] FileCache: read %v from metatile %v", t, path)
 
 	file, err := os.Open(path)
@@ -54,8 +55,9 @@ func (fc *FileCache) Read(t coords.Tile, dir string) (data coords.TileData, err 
 }
 
 // Check checks if tile in the file cache. If found, return found = true and mtime = modification time of file.
-func (fc *FileCache) Check(t coords.Tile, dir string) (found bool, mtime time.Time) {
-	path := fc.cfg.RootDir + "/" + dir + "/" + t.ToMetatile().Path()
+func (fc *FileCache) Check(t tile.Tile) (found bool, mtime time.Time) {
+	mt := metatile.NewFromTile(t)
+	path := mt.Filepath(fc.cfg.RootDir)
 	fc.logger.Printf("[DEBUG] FileCache: check %v", path)
 
 	stat, err := os.Stat(path)
@@ -67,8 +69,8 @@ func (fc *FileCache) Check(t coords.Tile, dir string) (found bool, mtime time.Ti
 }
 
 // Write writes metatile data to disk.
-func (fc *FileCache) Write(m coords.Metatile, dir string, data coords.MetatileData) error {
-	path := fc.cfg.RootDir + "/" + dir + "/" + m.Path()
+func (fc *FileCache) Write(m metatile.Metatile, data metatile.Data) error {
+	path := m.Filepath(fc.cfg.RootDir)
 	fc.logger.Printf("FileCache: write %v", path)
 
 	err := os.MkdirAll(filepath.Dir(path), 0777)
@@ -76,23 +78,27 @@ func (fc *FileCache) Write(m coords.Metatile, dir string, data coords.MetatileDa
 		return fmt.Errorf("FileCache: %v", err)
 	}
 
-	tmpDir := fc.cfg.RootDir + "/" + dir + "/" + m.Dir()
-	file, err := ioutil.TempFile(tmpDir, "fetch")
+	tmpDir := filepath.Dir(path)
+	f, err := ioutil.TempFile(tmpDir, "write")
 	if err != nil {
 		return fmt.Errorf("FileCache: %v", err)
 	}
 	defer func() {
-		file.Close()
-		os.Remove(file.Name())
+		f.Close()
+		os.Remove(f.Name())
 	}()
 	// fc.logger.Printf("[DEBUG] FileCache: write to temp file: %v", file.Name())
 
-	err = metatile.Encode(file, m, data)
+	/*err = metatile.Encode(file, m, data)
+	if err != nil {
+		return fmt.Errorf("FileCache: %v", err)
+	}*/
+	err = m.Encode(f, data)
 	if err != nil {
 		return fmt.Errorf("FileCache: %v", err)
 	}
 
-	err = os.Rename(file.Name(), path)
+	err = os.Rename(f.Name(), path)
 	if err != nil {
 		return fmt.Errorf("FileCache: %v", err)
 	}
