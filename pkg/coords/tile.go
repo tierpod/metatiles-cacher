@@ -7,15 +7,16 @@ import (
 	"strings"
 )
 
-// Tile describes tile coordinates. Zoom level, X, Y and extension.
+// Tile describes tile coordinates. zoom level, x and y coordinates, extension, mapname.
 type Tile struct {
 	Zoom int
 	X, Y int
 	Ext  string
+	Map  string
 }
 
 func (t Tile) String() string {
-	return fmt.Sprintf("Tile{Zoom:%v X:%v Y:%v Ext:%v}", t.Zoom, t.X, t.Y, t.Ext)
+	return fmt.Sprintf("Tile{Zoom:%v X:%v Y:%v Ext:%v Map:%v}", t.Zoom, t.X, t.Y, t.Ext, t.Map)
 }
 
 // ToLangLong converts z, x, y coordinates to latitude and longitude.

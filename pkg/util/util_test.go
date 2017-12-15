@@ -35,3 +35,24 @@ func ExampleDigestString() {
 	// Output:
 	// d67c5cbf5b01c9f91932e3b8def5e5f8
 }
+
+func ExampleMimetype() {
+	exts := []string{".png", ".json", ".topojson", ".geojson", ".mvt", ".unknown"}
+
+	for _, ext := range exts {
+		mt, err := Mimetype(ext)
+		if err != nil {
+			fmt.Printf("error: %v\n", err)
+			continue
+		}
+		fmt.Println(ext, mt)
+	}
+
+	// Output:
+	// .png image/png
+	// .json application/json
+	// .topojson application/json
+	// .geojson application/json
+	// .mvt application/vnd.mapbox-vector-tile
+	// error: unknown mimetype for extension ".unknown"
+}

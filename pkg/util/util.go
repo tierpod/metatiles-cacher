@@ -19,3 +19,17 @@ func MakeIntSlice(min, max int) []int {
 func DigestString(s string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(s)))
 }
+
+// Mimetype return mimetype based on file extension. Extension must be started with dot: `.png`
+func Mimetype(ext string) (string, error) {
+	switch ext {
+	case ".png":
+		return "image/png", nil
+	case ".json", ".topojson", ".geojson":
+		return "application/json", nil
+	case ".mvt":
+		return "application/vnd.mapbox-vector-tile", nil
+	default:
+		return "", fmt.Errorf("unknown mimetype for extension \"%v\"", ext)
+	}
+}
