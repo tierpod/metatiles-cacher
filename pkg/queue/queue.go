@@ -1,7 +1,11 @@
 // Package queue implements queue with unique strings.
 package queue
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+	"time"
+)
 
 // Uniq contains mutex and map for storing strings.
 type Uniq struct {
@@ -57,4 +61,24 @@ func (q *Uniq) Items() []string {
 	}
 
 	return result
+}
+
+// HasKey checks if key in queue.
+func (q *Uniq) HasKey(key string) bool {
+	q.mx.RLock()
+	defer q.mx.RUnlock()
+
+	_, found := q.m[key]
+	return found
+}
+
+// Wait waits until key has deleted from queue or timeout.
+func (q *Uniq) Wait(key string, timeout int) error {
+	for i := 0; i < timeout; i++ {
+		if !q.HasKey(key) {
+			return nil
+		}
+		time.Sleep(time.Second * time.Duration(i))
+	}
+	return fmt.Errorf("wait timeout for key: %v", key)
 }

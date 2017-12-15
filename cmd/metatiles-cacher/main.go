@@ -16,6 +16,7 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/handler"
+	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 	"github.com/tierpod/metatiles-cacher/pkg/logger"
 	"github.com/tierpod/metatiles-cacher/pkg/queue"
 )
@@ -50,8 +51,9 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	fetcher := httpclient.NewFetch(cfg.HTTPClient, logger)
+
 	uq := queue.NewUniq()
-	uqf := queue.NewUniq()
 
 	http.Handle("/status", handler.LogConnection(
 		handler.XToken(
@@ -63,17 +65,17 @@ func main() {
 	)
 	http.Handle("/maps/", handler.LogConnection(
 		mapsHandler{
-			logger: logger,
-			cache:  fc,
-			cfg:    cfg,
-			queue:  uq,
+			logger:  logger,
+			cache:   fc,
+			cfg:     cfg,
+			fetcher: fetcher,
 		}, logger))
 	http.Handle("/fetch/", handler.LogConnection(
 		fetchHandler{
-			logger: logger,
-			cache:  fc,
-			cfg:    cfg,
-			queue:  uqf,
+			logger:  logger,
+			cache:   fc,
+			cfg:     cfg,
+			fetcher: fetcher,
 		}, logger))
 
 	logger.Printf("Starting web server on: %v", cfg.Service.Bind)

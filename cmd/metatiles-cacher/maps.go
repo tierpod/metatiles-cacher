@@ -5,23 +5,21 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 	"github.com/tierpod/metatiles-cacher/pkg/latlong"
 	"github.com/tierpod/metatiles-cacher/pkg/metatile"
-	"github.com/tierpod/metatiles-cacher/pkg/queue"
 	"github.com/tierpod/metatiles-cacher/pkg/tile"
 	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
 type mapsHandler struct {
-	logger *log.Logger
-	cache  cache.ReadWriter
-	cfg    *config.Config
-	queue  *queue.Uniq
+	logger  *log.Logger
+	cache   cache.ReadWriter
+	cfg     *config.Config
+	fetcher *httpclient.Fetch
 }
 
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +64,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.logger.Printf("[DEBUG] try file from cache")
 	found, mtime := h.cache.Check(t)
 	// found in cache
 	if found {
@@ -74,26 +73,34 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// not found in cache
-	if h.cfg.Service.UseSource {
-		h.replyFromSource(w, t, source.URL, mimetype)
-	}
-
 	// fetch tiles for metatile and write to cache?
-	if h.cfg.Service.UseWriter {
-		mt := metatile.NewFromTile(t)
-		key := mt.Filepath("")
-
-		if h.queue.Add(key) {
-			h.logger.Printf("[DEBUG] add to queue: %v", key)
-			go h.fetchAndWrite(mt, t.Ext, source.URL, key)
-			return
-		}
-
-		h.logger.Printf("[DEBUG] already in queue, skip: %v", key)
+	mt := metatile.NewFromTile(t)
+	data, done, err := h.fetcher.MetatileWait(mt, source.URL)
+	if err != nil {
+		h.logger.Printf("[ERROR]: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	if done {
+		err = h.cache.Write(mt, data)
+		if err != nil {
+			h.logger.Printf("[ERROR]: %v", err)
+			return
+		}
+	}
+
+	h.logger.Printf("[DEBUG] try again")
+	// try again
+	found, mtime = h.cache.Check(t)
+	if !found {
+		h.logger.Printf("[ERROR] file not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	etag := `"` + util.DigestString(mtime.String()) + `"`
+	h.replyFromCache(w, t, mimetype, etag, r.Header.Get("If-None-Match"))
 	return
 }
 
@@ -118,41 +125,4 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, t tile.Tile, mimetype
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	w.Write(data)
 	return
-}
-
-func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, sURL, mimetype string) {
-	tile := fmt.Sprintf("%v/%v/%v%v", t.Zoom, t.X, t.Y, t.Ext)
-	url := strings.Replace(sURL, "{tile}", tile, 1)
-	h.logger.Printf("replyFromSource: get from URL(%v)", url)
-
-	data, err := httpclient.Get(url, h.cfg.HTTPClient.UserAgent)
-	if err != nil {
-		h.logger.Printf("[ERROR] replyFromSource: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", mimetype)
-	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-	w.Write(data)
-	return
-}
-
-func (h mapsHandler) fetchAndWrite(mt metatile.Metatile, ext, sURL, key string) error {
-	defer func() {
-		h.logger.Printf("fetchAndWrite: done, del from queue: %v", key)
-		h.queue.Del(key)
-	}()
-
-	data, err := httpclient.FetchMetatile(mt, ext, sURL, h.cfg.HTTPClient.UserAgent)
-	if err != nil {
-		return err
-	}
-
-	err = h.cache.Write(mt, data)
-	if err != nil {
-		return fmt.Errorf("[ERROR] fetchAndWrite: %v", err)
-	}
-
-	return nil
 }

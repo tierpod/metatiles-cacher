@@ -5,10 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
-	"strings"
-
-	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 )
 
 // Get gets data by url
@@ -36,26 +32,5 @@ func Get(url, ua string) (data []byte, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("httpclient/Get: %v", err)
 	}
-	return data, nil
-}
-
-// FetchMetatile fetchs metatile data from xybox coordinates for given metatile.
-func FetchMetatile(m metatile.Metatile, ext, sURL, ua string) (metatile.Data, error) {
-	var data metatile.Data
-	xybox := m.XYBox()
-
-	for _, x := range xybox.X {
-		for _, y := range xybox.Y {
-			offset := metatile.XYOffset(x, y)
-			tile := strconv.Itoa(m.Zoom) + "/" + strconv.Itoa(x) + "/" + strconv.Itoa(y) + ext
-			url := strings.Replace(sURL, "{tile}", tile, 1)
-			res, err := Get(url, ua)
-			if err != nil {
-				return data, err
-			}
-			data[offset] = res
-		}
-	}
-
 	return data, nil
 }
