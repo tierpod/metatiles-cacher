@@ -10,7 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tierpod/metatiles-cacher/pkg/coords"
+	"github.com/tierpod/metatiles-cacher/pkg/bbox"
+	"github.com/tierpod/metatiles-cacher/pkg/latlong"
+	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
@@ -147,17 +149,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	top := coords.LatLong{Lat: flagLat.max, Long: flagLong.min}
-	bottom := coords.LatLong{Lat: flagLat.min, Long: flagLong.max}
+	top := latlong.LatLong{Lat: flagLat.max, Long: flagLong.min}
+	bottom := latlong.LatLong{Lat: flagLat.min, Long: flagLong.max}
 	zooms := util.MakeIntSlice(flagZooms.min, flagZooms.max+1)
 
-	tiles := coords.NewBBoxFromLatLong(zooms, top, bottom, flagExt)
+	tiles := bbox.NewFromLatLong(zooms, top, bottom, flagExt)
 
+	filepathPrev := ""
 	for t := range tiles {
 		if flagMeta {
-			fmt.Println(flagPrefix + t.ToMetatile().Path())
+			mt := metatile.NewFromTile(t)
+			filepath := mt.Filepath(flagPrefix)
+			// skip filepath if same as previous
+			if filepath == filepathPrev {
+				continue
+			}
+			fmt.Println(filepathPrev)
+			filepathPrev = filepath
 		} else {
-			fmt.Println(flagPrefix + t.Path())
+			fmt.Println(t.Filepath(flagPrefix))
 		}
 	}
 }
