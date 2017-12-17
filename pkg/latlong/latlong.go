@@ -1,3 +1,4 @@
+// Package latlong contains description of points with latitude and longtiture coordinates.
 package latlong
 
 import "fmt"

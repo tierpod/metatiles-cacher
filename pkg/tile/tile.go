@@ -1,3 +1,4 @@
+// Package tile contains description of Tile struct with z, x, y coordinates and functions.
 package tile
 
 import (
@@ -14,7 +15,7 @@ type Tile struct {
 	Map  string
 }
 
-// Data is the bytes
+// Data is the slice of bytes.
 type Data []byte
 
 func (t Tile) String() string {

@@ -36,7 +36,7 @@ func NewFromURL(url string) (Metatile, error) {
 	}, nil
 }
 
-// NewFromTile creates Metatile from Tile
+// NewFromTile creates Metatile from Tile.
 func NewFromTile(t tile.Tile) Metatile {
 	h := xyToHashes(t.X, t.Y)
 	x, y := h.XY()

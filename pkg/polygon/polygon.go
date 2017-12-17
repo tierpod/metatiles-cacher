@@ -1,3 +1,4 @@
+// Package polygon contains description of polygon and region of points.
 package polygon
 
 import "github.com/tierpod/metatiles-cacher/pkg/latlong"

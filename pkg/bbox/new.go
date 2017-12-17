@@ -1,3 +1,4 @@
+// Package bbox contains functions for make box of tiles.
 package bbox
 
 import (

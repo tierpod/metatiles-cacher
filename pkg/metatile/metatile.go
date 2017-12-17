@@ -1,3 +1,4 @@
+// Package metatile contains description of Metatile struct with z, hashes coordinates and functions.
 package metatile
 
 import (
@@ -9,11 +10,13 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
-// MaxSize is the maximum metatile size.
 const (
-	MaxSize int    = 8
-	Area    int    = MaxSize * MaxSize
-	Ext     string = ".meta"
+	// MaxSize is the maximum metatile size.
+	MaxSize int = 8
+	// Area is the area of metatile.
+	Area int = MaxSize * MaxSize
+	// Ext is the metatile file extension.
+	Ext string = ".meta"
 )
 
 type hashes [5]int
@@ -39,7 +42,7 @@ type Metatile struct {
 	X, Y   int
 }
 
-// Data is area of tile data.
+// Data is array of tile data.
 type Data [Area]tile.Data
 
 func (m Metatile) String() string {
@@ -57,7 +60,7 @@ func (m Metatile) Filepath(basedir string) string {
 	return path.Join(basedir, m.Map, zoom, h4, h3, h2, h1, h0)
 }
 
-// Size return metatile size for current zoom level
+// Size return metatile size for current zoom level.
 func (m Metatile) Size() int {
 	n := int(uint(1) << uint(m.Zoom))
 	if n < MaxSize {
