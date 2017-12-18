@@ -7,20 +7,21 @@ import (
 	"time"
 )
 
-// Uniq contains mutex and map for storing strings.
+// Uniq contains mutex and map for storing strings. Map contains string as `key` and `chan bool` as
+// value.
 type Uniq struct {
 	mx sync.RWMutex
-	m  map[string]bool
+	m  map[string]chan bool
 }
 
 // NewUniq creates new Uniq queue.
 func NewUniq() *Uniq {
 	return &Uniq{
-		m: make(map[string]bool),
+		m: make(map[string]chan bool),
 	}
 }
 
-// Add adds key to map if item with this key does not exist (return true).
+// Add adds item with given key to map if item with this key does not exist (return true).
 // Skip if key exist (return false).
 func (q *Uniq) Add(key string) bool {
 	q.mx.Lock()
@@ -28,7 +29,8 @@ func (q *Uniq) Add(key string) bool {
 
 	_, found := q.m[key]
 	if !found {
-		q.m[key] = true
+		done := make(chan bool)
+		q.m[key] = done
 		return true
 	}
 
@@ -40,6 +42,7 @@ func (q *Uniq) Del(key string) {
 	q.mx.Lock()
 	defer q.mx.Unlock()
 
+	close(q.m[key])
 	delete(q.m, key)
 }
 
@@ -63,7 +66,7 @@ func (q *Uniq) Items() []string {
 	return result
 }
 
-// HasKey checks if key in queue.
+// HasKey checks if queue has item with key.
 func (q *Uniq) HasKey(key string) bool {
 	q.mx.RLock()
 	defer q.mx.RUnlock()
@@ -72,13 +75,16 @@ func (q *Uniq) HasKey(key string) bool {
 	return found
 }
 
-// Wait waits until key has deleted from queue or timeout.
+// Wait waits until key was deleted from queue or timeout appears.
 func (q *Uniq) Wait(key string, timeout int) error {
-	for i := 0; i < timeout; i++ {
-		if !q.HasKey(key) {
-			return nil
+	if q.HasKey(key) {
+		select {
+		case <-q.m[key]:
+			// fmt.Printf("DONE CHAN CLOSED FOR KEY: %v\n", key)
+		case <-time.After(time.Second * time.Duration(timeout)):
+			return fmt.Errorf("wait timeout for key: %v", key)
 		}
-		time.Sleep(time.Second * time.Duration(i))
 	}
-	return fmt.Errorf("wait timeout for key: %v", key)
+
+	return nil
 }
