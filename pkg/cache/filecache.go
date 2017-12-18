@@ -69,8 +69,8 @@ func (fc *FileCache) Check(t tile.Tile) (found bool, mtime time.Time) {
 }
 
 // Write writes metatile data to disk.
-func (fc *FileCache) Write(m metatile.Metatile, data metatile.Data) error {
-	path := m.Filepath(fc.cfg.RootDir)
+func (fc *FileCache) Write(mt metatile.Metatile, data metatile.Data) error {
+	path := mt.Filepath(fc.cfg.RootDir)
 	fc.logger.Printf("FileCache: write %v", path)
 
 	err := os.MkdirAll(filepath.Dir(path), 0777)
@@ -93,7 +93,7 @@ func (fc *FileCache) Write(m metatile.Metatile, data metatile.Data) error {
 	if err != nil {
 		return fmt.Errorf("FileCache: %v", err)
 	}*/
-	err = m.Encode(f, data)
+	err = mt.Encode(f, data)
 	if err != nil {
 		return fmt.Errorf("FileCache: %v", err)
 	}
