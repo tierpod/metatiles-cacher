@@ -1,7 +1,5 @@
 service:
   bind: localhost:8080
-  use_writer: true # write to cache?
-  use_source: true # get tiles from remote sources?
   max_age: 86400   # Cache-Control: max-age header
   x_token: 123     # X-Token header for access to /status
 

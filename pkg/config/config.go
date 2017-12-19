@@ -43,10 +43,6 @@ type Service struct {
 	// Bind to address.
 	Bind string `yaml:"bind"`
 	// Send requests to remote source?
-	UseSource bool `yaml:"use_source"`
-	// Write to metatile cache?
-	UseWriter bool `yaml:"use_writer"`
-	// Token for XToken handler.
 	XToken string `yaml:"x_token"`
 	// Cache-Control: max-age value in seconds.
 	MaxAge int `yaml:"max_age"`
