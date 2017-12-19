@@ -2,7 +2,7 @@
 package queue
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 	"time"
 )
@@ -74,6 +74,9 @@ func (q *Uniq) HasKey(key string) bool {
 	return found
 }
 
+// ErrWaitTimeout is the error if Wait timeout achieved.
+var ErrWaitTimeout = errors.New("wait timeout")
+
 // Wait waits until key was deleted from queue or timeout appears.
 func (q *Uniq) Wait(key string, timeout int) error {
 	if q.HasKey(key) {
@@ -81,7 +84,7 @@ func (q *Uniq) Wait(key string, timeout int) error {
 		case <-q.m[key]:
 			// fmt.Printf("DONE CHAN CLOSED FOR KEY: %v\n", key)
 		case <-time.After(time.Second * time.Duration(timeout)):
-			return fmt.Errorf("wait timeout for key: %v", key)
+			return ErrWaitTimeout
 		}
 	}
 
