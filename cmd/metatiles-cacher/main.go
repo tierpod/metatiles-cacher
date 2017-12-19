@@ -15,8 +15,8 @@ import (
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
+	"github.com/tierpod/metatiles-cacher/pkg/fetch"
 	"github.com/tierpod/metatiles-cacher/pkg/handler"
-	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 	"github.com/tierpod/metatiles-cacher/pkg/logger"
 	"github.com/tierpod/metatiles-cacher/pkg/queue"
 )
@@ -51,7 +51,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	fetcher := httpclient.NewFetch(cfg.HTTPClient, logger)
+	fetcher := fetch.New(cfg.HTTPClient, logger)
 
 	uq := queue.NewUniq()
 

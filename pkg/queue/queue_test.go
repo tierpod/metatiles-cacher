@@ -9,15 +9,8 @@ import (
 func TestAdd(t *testing.T) {
 	q := NewUniq()
 
-	added := q.Add("key")
-	if added == false {
-		t.Errorf("Add: expected true, got false")
-	}
-
-	added = q.Add("key")
-	if added == true {
-		t.Errorf("Add item with exist key: expected false, got true")
-	}
+	q.Add("key")
+	q.Add("key")
 }
 
 func TestDel(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
-	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
+	"github.com/tierpod/metatiles-cacher/pkg/fetch"
 	"github.com/tierpod/metatiles-cacher/pkg/latlong"
 	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 	"github.com/tierpod/metatiles-cacher/pkg/tile"
@@ -19,7 +19,7 @@ type mapsHandler struct {
 	logger  *log.Logger
 	cache   cache.ReadWriter
 	cfg     *config.Config
-	fetcher *httpclient.Fetch
+	fetcher fetch.CacheWriter
 }
 
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -64,9 +64,8 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.logger.Printf("[DEBUG] try file from cache")
+	h.logger.Printf("[DEBUG] try get tile from cache")
 	found, mtime := h.cache.Check(t)
-	// found in cache
 	if found {
 		etag := `"` + util.DigestString(mtime.String()) + `"`
 		h.replyFromCache(w, t, mimetype, etag, r.Header.Get("If-None-Match"))
@@ -75,32 +74,24 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// fetch tiles for metatile and write to cache?
 	mt := metatile.NewFromTile(t)
-	data, done, err := h.fetcher.MetatileWait(mt, source.URL)
+	err = h.fetcher.MetatileWriteToCache(mt, source.URL, h.cache)
 	if err != nil {
 		h.logger.Printf("[ERROR]: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if done {
-		err = h.cache.Write(mt, data)
-		if err != nil {
-			h.logger.Printf("[ERROR]: %v", err)
-			return
-		}
-	}
-
-	h.logger.Printf("[DEBUG] try again")
+	h.logger.Printf("[DEBUG] try get tile from cache after writing")
 	// try again
 	found, mtime = h.cache.Check(t)
-	if !found {
-		h.logger.Printf("[ERROR] file not found")
-		w.WriteHeader(http.StatusNotFound)
+	if found {
+		etag := `"` + util.DigestString(mtime.String()) + `"`
+		h.replyFromCache(w, t, mimetype, etag, r.Header.Get("If-None-Match"))
 		return
 	}
 
-	etag := `"` + util.DigestString(mtime.String()) + `"`
-	h.replyFromCache(w, t, mimetype, etag, r.Header.Get("If-None-Match"))
+	h.logger.Printf("[ERROR] unable to get tile")
+	w.WriteHeader(http.StatusNotFound)
 	return
 }
 

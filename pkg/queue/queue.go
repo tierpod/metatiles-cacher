@@ -23,18 +23,17 @@ func NewUniq() *Uniq {
 
 // Add adds item with given key to map if item with this key does not exist (return true).
 // Skip if key exist (return false).
-func (q *Uniq) Add(key string) bool {
+func (q *Uniq) Add(key string) {
 	q.mx.Lock()
 	defer q.mx.Unlock()
 
 	_, found := q.m[key]
-	if !found {
-		done := make(chan bool)
-		q.m[key] = done
-		return true
+	if found {
+		return
 	}
 
-	return false
+	done := make(chan bool)
+	q.m[key] = done
 }
 
 // Del deletes key from map.

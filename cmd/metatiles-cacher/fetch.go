@@ -6,7 +6,7 @@ import (
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
-	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
+	"github.com/tierpod/metatiles-cacher/pkg/fetch"
 	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 	"github.com/tierpod/metatiles-cacher/pkg/tile"
 	"github.com/tierpod/metatiles-cacher/pkg/util"
@@ -16,7 +16,7 @@ type fetchHandler struct {
 	logger  *log.Logger
 	cache   cache.ReadWriter
 	cfg     *config.Config
-	fetcher *httpclient.Fetch
+	fetcher *fetch.Fetch
 }
 
 func (h fetchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -51,16 +51,13 @@ func (h fetchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// fetch tiles for metatile and write to cache
 	mt := metatile.NewFromTile(t)
-	data, skipped, err := h.fetcher.Metatile(mt, source.URL)
-	if err != nil {
+	data, err := h.fetcher.Metatile(mt, source.URL)
+	if err != nil && err.Error() == "item already present in queue" {
+		w.WriteHeader(http.StatusCreated)
+		return
+	} else if err != nil {
 		h.logger.Printf("[ERROR]: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if skipped {
-		// TODO: wait to end fetching
-		w.WriteHeader(http.StatusCreated)
 		return
 	}
 
