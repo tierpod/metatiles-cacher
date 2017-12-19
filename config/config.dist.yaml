@@ -12,8 +12,9 @@ log:
 filecache:
   root_dir: /tmp/metatiles-cacher
 
-httpclient:
+fetch:
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
+  queue_timeout: 30
 
 sources:
   # write files to {root_dir}/testsrc1 directory

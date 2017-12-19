@@ -38,11 +38,11 @@ type CacheWriter interface {
 type Fetch struct {
 	logger *log.Logger
 	queue  *queue.Uniq
-	cfg    config.HTTPClient
+	cfg    config.Fetch
 }
 
 // New creates new Fetch.
-func New(cfg config.HTTPClient, logger *log.Logger) *Fetch {
+func New(cfg config.Fetch, logger *log.Logger) *Fetch {
 	q := queue.NewUniq()
 	return &Fetch{
 		logger: logger,

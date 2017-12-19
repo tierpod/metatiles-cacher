@@ -51,7 +51,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	fetcher := fetch.New(cfg.HTTPClient, logger)
+	fetcher := fetch.New(cfg.Fetch, logger)
 
 	uq := queue.NewUniq()
 

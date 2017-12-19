@@ -20,11 +20,11 @@ const (
 
 // Config is the root of configuration.
 type Config struct {
-	Service    Service    `yaml:"service"`
-	Log        Log        `yaml:"log"`
-	FileCache  FileCache  `yaml:"filecache"`
-	HTTPClient HTTPClient `yaml:"httpclient"`
-	Sources    []Source   `yaml:"sources"`
+	Service   Service   `yaml:"service"`
+	Log       Log       `yaml:"log"`
+	FileCache FileCache `yaml:"filecache"`
+	Fetch     Fetch     `yaml:"fetch"`
+	Sources   []Source  `yaml:"sources"`
 }
 
 // Source returns source configuration from Sources list by given name. If it does not exist, return error.
@@ -69,9 +69,10 @@ type FileCache struct {
 	RootDir string `yaml:"root_dir"`
 }
 
-// HTTPClient contains http client configuration.
-type HTTPClient struct {
-	UserAgent string `yaml:"user_agent"`
+// Fetch contains fetcher configuration.
+type Fetch struct {
+	UserAgent    string `yaml:"user_agent"`
+	QueueTimeout int    `yaml:"queue_timeout"`
 }
 
 // Source contains source configuration.
@@ -132,6 +133,10 @@ func Load(path string) (*Config, error) {
 	err = yaml.Unmarshal(data, &c)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal config: %v", err)
+	}
+
+	if c.Fetch.QueueTimeout == 0 {
+		c.Fetch.QueueTimeout = 30
 	}
 
 	for i := range c.Sources {

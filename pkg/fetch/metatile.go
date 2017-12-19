@@ -39,12 +39,11 @@ func (f *Fetch) Metatile(mt metatile.Metatile, URLTmpl string) (metatile.Data, e
 // MetatileWaitWriteToCache fetchs metatile data and writes it to cache. If metatile already in the
 // fetching queue, wait for fetching and writing complete.
 func (f *Fetch) MetatileWaitWriteToCache(mt metatile.Metatile, URLTmpl string, w cache.Writer) error {
-	timeout := 30 // TODO: timeout to cfg.httpclient
 	key := mt.Filepath("")
 
 	if f.queue.HasKey(key) {
 		f.logger.Printf("[DEBUG] already in queue, wait: %v", key)
-		if errw := f.queue.Wait(key, timeout); errw != nil {
+		if errw := f.queue.Wait(key, f.cfg.QueueTimeout); errw != nil {
 			return errw
 		}
 		return nil
