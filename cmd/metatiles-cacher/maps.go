@@ -19,7 +19,7 @@ type mapsHandler struct {
 	logger  *log.Logger
 	cache   cache.ReadWriter
 	cfg     *config.Config
-	fetcher fetch.CacheWriter
+	fetcher fetch.CacheWaitWriter
 }
 
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +74,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// fetch tiles for metatile and write to cache?
 	mt := metatile.NewFromTile(t)
-	err = h.fetcher.MetatileWriteToCache(mt, source.URL, h.cache)
+	err = h.fetcher.MetatileWaitWriteToCache(mt, source.URL, h.cache)
 	if err != nil {
 		h.logger.Printf("[ERROR]: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
