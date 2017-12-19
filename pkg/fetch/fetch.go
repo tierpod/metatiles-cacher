@@ -1,5 +1,5 @@
-// Package fetch provides fetcher service who can fetch tile data, metatile data and writes it to
-// cache.
+// Package fetch provides fetch service who can fetch tile/metatile data, waits for complete and
+// writes it to cache.
 package fetch
 
 import (
@@ -9,16 +9,28 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 	"github.com/tierpod/metatiles-cacher/pkg/queue"
+	"github.com/tierpod/metatiles-cacher/pkg/tile"
 )
 
 // Fetcher provides interface for fetch tile and metatile data.
 type Fetcher interface {
-	Metatile(mt metatile.Metatile, URLTmpl string) (data metatile.Data, err error)
+	Tile(t tile.Tile, URLTmpl string) (tile.Data, error)
+	Metatile(mt metatile.Metatile, URLTmpl string) (metatile.Data, error)
 }
 
-// CacheWriter provides interface for fetch and write tile and metatile data.
+// CacheWaitWriter provides interface for fetching metatile data, writing it to cache and waiting
+// for complete. All metatiles stored in fetching queue. If metatile already in queue, do not run
+// new fetching, waiting for complete.
+type CacheWaitWriter interface {
+	// TileWaitWriteToCache(t tile.Tile, URLTmpl string, w cache.Writer) error
+	MetatileWaitWriteToCache(mt metatile.Metatile, URLTmpl string, w cache.Writer) error
+}
+
+// CacheWriter provides interface for fetching metatile data and writing it to cache. All metatiles
+// stored in fetching queue. If metatile already in queue, do not run new fetching, return
+// ErrQueueHasKey.
 type CacheWriter interface {
-	Fetcher
+	// TileWriteToCache(t tile.Tile, URLTmpl string, w cache.Writer) error
 	MetatileWriteToCache(mt metatile.Metatile, URLTmpl string, w cache.Writer) error
 }
 

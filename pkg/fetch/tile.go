@@ -9,7 +9,7 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/tile"
 )
 
-// Tile fetchs tile data, using URLTmpl as URL template with placeholders {x} {y} {z}.
+// Tile fetchs tile data, using URLTmpl as URL template with placeholders: {x} {y} {z}.
 func (f *Fetch) Tile(t tile.Tile, URLTmpl string) (tile.Data, error) {
 	url := strings.Replace(URLTmpl, "{z}", strconv.Itoa(t.Zoom), 1)
 	url = strings.Replace(url, "{x}", strconv.Itoa(t.X), 1)
