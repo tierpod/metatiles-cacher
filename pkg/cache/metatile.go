@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/tierpod/metatiles-cacher/pkg/metatile"
 	"github.com/tierpod/metatiles-cacher/pkg/tile"
 )
 
@@ -16,7 +17,6 @@ import (
 // metatile.
 type MetatileCacher interface {
 	Filepath(basedir string) string
-	DecodeTile(w io.Writer, r io.ReadSeeker, x, y int) error
 }
 
 // MetatileCache is the filecache using metatile file format.
@@ -51,7 +51,7 @@ func (c *MetatileCache) Read(mc MetatileCacher, t tile.Tile, w io.Writer) error 
 	defer f.Close()
 
 	var buf bytes.Buffer
-	err = mc.DecodeTile(&buf, f, t.X, t.Y)
+	err = metatile.DecodeTileTo(&buf, f, t.X, t.Y)
 	if err != nil {
 		return err
 	}

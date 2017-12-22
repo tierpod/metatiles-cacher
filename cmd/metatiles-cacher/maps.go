@@ -105,7 +105,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// fetch metatile to buffer
 	var buf bytes.Buffer
-	err = mt.FetchEncodeTo(&buf, source.URL, h.cfg.Fetch.UserAgent)
+	err = mt.FetchDataEncodeTo(&buf, source.URL, h.cfg.Fetch.UserAgent)
 	if err != nil {
 		h.logger.Printf("[ERROR]: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

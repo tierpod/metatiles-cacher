@@ -6,9 +6,7 @@
 package metatile
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"path"
 	"strconv"
 
@@ -72,27 +70,6 @@ func (mt Metatile) Size() int {
 	return MaxSize
 }
 
-// DecodeTile reads metatile data from r, decode tile data with (x, y) coordinates and writes it to w.
-func (mt Metatile) DecodeTile(w io.Writer, r io.ReadSeeker, x, y int) error {
-	data, err := decodeTile(r, x, y)
-	if err != nil {
-		return err
-	}
-
-	io.Copy(w, bytes.NewReader(data))
-	return nil
-}
-
-// EncodeTiles encodes tiles data to metatile format and writes it to w.
-func (mt Metatile) EncodeTiles(w io.Writer, data Data) error {
-	err := encodeMetatile(w, data, mt.X, mt.Y, mt.Zoom)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // XYBox is the box of (x, y) coordinates contains inside metatile.
 type XYBox struct {
 	X []int
@@ -107,7 +84,7 @@ func (mt Metatile) XYBox() XYBox {
 	return XYBox{x, y}
 }
 
-// Data is array of tile data.
+// Data is array of tile data with size Area.
 type Data [Area]tile.Data
 
 // XYOffset returns offset of tile data inside metatile.

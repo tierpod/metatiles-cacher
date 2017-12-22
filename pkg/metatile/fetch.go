@@ -8,9 +8,9 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/tile"
 )
 
-// FetchEncodeTo fetchs tiles data, encodes it to metatile format and writes to w. Use ua as
+// FetchDataEncodeTo fetchs tiles data, encodes it to metatile format and writes to w. Use ua as
 // httpclient UserAgent.
-func (mt Metatile) FetchEncodeTo(w io.Writer, url, ua string) error {
+func (mt Metatile) FetchDataEncodeTo(w io.Writer, url, ua string) error {
 	var data Data
 	data, err := mt.FetchTiles(url, ua)
 	if err != nil {

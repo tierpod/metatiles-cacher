@@ -18,14 +18,20 @@ type metaEntry struct {
 	Size   int32
 }
 
-type metaLayout struct {
+// MetaLayout is the metatile file struct.
+type MetaLayout struct {
 	Magic   []byte
 	Count   int32
 	X, Y, Z int32
 	Index   []metaEntry
 }
 
-func encodeHeader(w io.Writer, ml *metaLayout) error {
+func (m *MetaLayout) String() string {
+	return fmt.Sprintf("MetatileLayout{X:%v Y:%v Z:%v Count:%v}", m.X, m.Y, m.Z, m.Count)
+}
+
+// EncodeHeader encodes ml and writes it to w.
+func EncodeHeader(w io.Writer, ml *MetaLayout) error {
 	endian := binary.LittleEndian
 	var err error
 	if err = binary.Write(w, endian, ml.Magic); err != nil {
@@ -51,19 +57,20 @@ func encodeHeader(w io.Writer, ml *metaLayout) error {
 	return nil
 }
 
-func encodeMetatile(w io.Writer, data Data, x, y, zoom int) error {
+// EncodeData encodes data for metatile mt and writes it to w.
+func (mt Metatile) EncodeData(w io.Writer, data Data) error {
 	mSize := MaxSize * MaxSize
 
 	if len(data) < Area {
 		return fmt.Errorf("encodeMetatile: data size: %v < %v", len(data), mSize)
 	}
 
-	ml := &metaLayout{
+	ml := &MetaLayout{
 		Magic: []byte{'M', 'E', 'T', 'A'},
 		Count: int32(mSize),
-		X:     int32(x),
-		Y:     int32(y),
-		Z:     int32(zoom),
+		X:     int32(mt.X),
+		Y:     int32(mt.Y),
+		Z:     int32(mt.Zoom),
 	}
 	offset := int32(20 + 8*mSize)
 
@@ -85,7 +92,7 @@ func encodeMetatile(w io.Writer, data Data, x, y, zoom int) error {
 	// fmt.Printf("%+v\n", ml)
 
 	// encode and write headers
-	if err := encodeHeader(w, ml); err != nil {
+	if err := EncodeHeader(w, ml); err != nil {
 		return fmt.Errorf("encodeMetatile: %v", err)
 	}
 
@@ -96,6 +103,16 @@ func encodeMetatile(w io.Writer, data Data, x, y, zoom int) error {
 		if _, err := w.Write(tile); err != nil {
 			return fmt.Errorf("encodeMetatile: %v", err)
 		}
+	}
+
+	return nil
+}
+
+// EncodeTiles encodes tiles data to metatile format for mt and writes it to w.
+func (mt Metatile) EncodeTiles(w io.Writer, data Data) error {
+	err := mt.EncodeData(w, data)
+	if err != nil {
+		return err
 	}
 
 	return nil
