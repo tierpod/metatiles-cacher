@@ -1,6 +1,3 @@
-// Package metatile provides functions for decoding and encoding metatile files.
-//
-// Metatile format description: https://github.com/openstreetmap/mod_tile/blob/master/src/metatile.cpp
 package metatile
 
 import (
@@ -54,20 +51,19 @@ func encodeHeader(w io.Writer, ml *metaLayout) error {
 	return nil
 }
 
-// Encode encodes data to metatile and writes it to w.
-func (m Metatile) Encode(w io.Writer, data Data) error {
+func encodeMetatile(w io.Writer, data Data, x, y, zoom int) error {
 	mSize := MaxSize * MaxSize
 
 	if len(data) < Area {
-		return fmt.Errorf("data size: %v < %v", len(data), mSize)
+		return fmt.Errorf("encodeMetatile: data size: %v < %v", len(data), mSize)
 	}
 
 	ml := &metaLayout{
 		Magic: []byte{'M', 'E', 'T', 'A'},
 		Count: int32(mSize),
-		X:     int32(m.X),
-		Y:     int32(m.Y),
-		Z:     int32(m.Zoom),
+		X:     int32(x),
+		Y:     int32(y),
+		Z:     int32(zoom),
 	}
 	offset := int32(20 + 8*mSize)
 
@@ -76,7 +72,7 @@ func (m Metatile) Encode(w io.Writer, data Data) error {
 		tile := data[i]
 		s := int32(len(tile))
 		if s > MaxEntrySize {
-			return fmt.Errorf("entry size > MaxEntrySize (size: %v)", s)
+			return fmt.Errorf("encodeMetatile: entry size > MaxEntrySize (size: %v)", s)
 		}
 
 		ml.Index = append(ml.Index, metaEntry{
@@ -90,7 +86,7 @@ func (m Metatile) Encode(w io.Writer, data Data) error {
 
 	// encode and write headers
 	if err := encodeHeader(w, ml); err != nil {
-		return fmt.Errorf("metatile/encodeHeader: %v", err)
+		return fmt.Errorf("encodeMetatile: %v", err)
 	}
 
 	// encode and write data
@@ -98,7 +94,7 @@ func (m Metatile) Encode(w io.Writer, data Data) error {
 		tile := data[i]
 
 		if _, err := w.Write(tile); err != nil {
-			return fmt.Errorf("metatile/write: %v", err)
+			return fmt.Errorf("encodeMetatile: %v", err)
 		}
 	}
 

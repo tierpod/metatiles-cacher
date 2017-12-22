@@ -15,10 +15,9 @@ import (
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
-	"github.com/tierpod/metatiles-cacher/pkg/fetch"
 	"github.com/tierpod/metatiles-cacher/pkg/handler"
+	"github.com/tierpod/metatiles-cacher/pkg/lock"
 	"github.com/tierpod/metatiles-cacher/pkg/logger"
-	"github.com/tierpod/metatiles-cacher/pkg/queue"
 )
 
 var version string
@@ -46,18 +45,16 @@ func main() {
 
 	logger := logger.New(os.Stdout, cfg.Log.Debug, cfg.Log.Datetime)
 
-	fc, err := cache.NewFileCache(cfg.FileCache, logger)
+	cacher, err := cache.NewMetatileCache(cfg.FileCache.RootDir, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	fetcher := fetch.New(cfg.Fetch, logger)
-
-	uq := queue.NewUniq()
+	locker := lock.New()
 
 	http.Handle("/status", handler.LogConnection(
 		handler.XToken(
-			statusHandler{queue: uq}, cfg.Service.XToken, logger,
+			statusHandler{locker: locker}, cfg.Service.XToken, logger,
 		),
 		logger))
 	http.Handle("/static/", handler.LogConnection(
@@ -65,18 +62,18 @@ func main() {
 	)
 	http.Handle("/maps/", handler.LogConnection(
 		mapsHandler{
-			logger:  logger,
-			cache:   fc,
-			cfg:     cfg,
-			fetcher: fetcher,
+			cfg:    cfg,
+			logger: logger,
+			cacher: cacher,
+			locker: locker,
 		}, logger))
-	http.Handle("/fetch/", handler.LogConnection(
-		fetchHandler{
-			logger:  logger,
-			cache:   fc,
-			cfg:     cfg,
-			fetcher: fetcher,
-		}, logger))
+	/*http.Handle("/fetch/", handler.LogConnection(
+	fetchHandler{
+		logger:  logger,
+		cache:   fc,
+		cfg:     cfg,
+		fetcher: fetcher,
+	}, logger))*/
 
 	logger.Printf("Starting web server on: %v", cfg.Service.Bind)
 	err = http.ListenAndServe(cfg.Service.Bind, nil)

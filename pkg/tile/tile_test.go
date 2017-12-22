@@ -2,16 +2,26 @@ package tile
 
 import "fmt"
 
-func ExampleTile_Filepath() {
-	t := Tile{Zoom: 1, X: 1, Y: 1, Ext: ".png", Map: "mapname"}
+func ExampleNewFromURL() {
+	urls := []string{
+		"map/1/2/3.png",
+		"http://localhost:8080/map/1/2/3.png",
+		"1/2/3.png",
+		"map/z/x/y.png",
+	}
 
-	tilepath := t.Filepath("")
-	fmt.Println(tilepath)
-
-	tilepath = t.Filepath("/var/cache/tile")
-	fmt.Println(tilepath)
+	for _, url := range urls {
+		t, err := NewFromURL(url)
+		if err != nil {
+			fmt.Printf("error: %v\n", err)
+			continue
+		}
+		fmt.Println(t)
+	}
 
 	// Output:
-	// mapname/1/1/1.png
-	// /var/cache/tile/mapname/1/1/1.png
+	// Tile{Zoom:1 X:2 Y:3 Ext:.png Map:map}
+	// Tile{Zoom:1 X:2 Y:3 Ext:.png Map:map}
+	// error: could not parse url string to Tile struct
+	// error: could not parse url string to Tile struct
 }

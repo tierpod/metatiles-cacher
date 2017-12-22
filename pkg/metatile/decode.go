@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-
-	"github.com/tierpod/metatiles-cacher/pkg/tile"
 )
 
 func decodeHeader(r io.Reader) (*metaLayout, error) {
@@ -50,37 +48,36 @@ func decodeHeader(r io.Reader) (*metaLayout, error) {
 	return ml, nil
 }
 
-// GetTile decodes metatile from r and extract tile data.
-func GetTile(r io.ReadSeeker, t tile.Tile) (tile.Data, error) {
+func decodeTile(r io.ReadSeeker, x, y int) ([]byte, error) {
 	ml, err := decodeHeader(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decodeTile: %v", err)
 	}
 
 	size := int32(math.Sqrt(float64(ml.Count)))
-	index := (int32(t.X)-ml.X)*size + (int32(t.Y) - ml.Y)
+	index := (int32(x)-ml.X)*size + (int32(y) - ml.Y)
 	if index >= ml.Count {
-		return nil, fmt.Errorf("invalid index %v/%v", index, ml.Count)
+		return nil, fmt.Errorf("decodeTile: invalid index %v/%v", index, ml.Count)
 	}
 
 	entry := ml.Index[index]
 	if entry.Size > MaxEntrySize {
-		return nil, fmt.Errorf("entry size > MaxEntrySize (size: %v)", entry.Size)
+		return nil, fmt.Errorf("decodeTile: entry size > MaxEntrySize (size: %v)", entry.Size)
 	}
 
 	_, err = r.Seek(int64(entry.Offset), 0)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decodeTile: %v", err)
 	}
 
 	buf := make([]byte, entry.Size)
 	l, err := r.Read(buf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decodeTile: %v", err)
 	}
 
 	if int32(l) != entry.Size {
-		return nil, fmt.Errorf("invalid tile size: %v != %v", l, entry.Size)
+		return nil, fmt.Errorf("decodeTile: invalid tile size: %v != %v", l, entry.Size)
 	}
 
 	return buf, nil

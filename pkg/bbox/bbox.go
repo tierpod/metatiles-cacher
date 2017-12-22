@@ -14,11 +14,11 @@ func NewFromLatLong(zooms []int, top latlong.LatLong, bottom latlong.LatLong, ex
 	go func() {
 		defer close(ch)
 		for _, z := range zooms {
-			tTop := tile.NewFromLatLong(top, z)
-			tBottom := tile.NewFromLatLong(bottom, z)
+			tTop := tile.NewFromLatLong(top.Lat, top.Long, z)
+			tBottom := tile.NewFromLatLong(bottom.Lat, bottom.Long, z)
 			for x := tTop.X; x <= tBottom.X; x++ {
 				for y := tTop.Y; y <= tBottom.Y; y++ {
-					t := tile.Tile{Zoom: z, X: x, Y: y, Ext: ext}
+					t := tile.New(z, x, y, ext, "")
 					ch <- t
 				}
 			}

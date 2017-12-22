@@ -4,17 +4,19 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
-
-	"github.com/tierpod/metatiles-cacher/pkg/queue"
 )
 
+// LockInfoer provides interface for get items locker.
+type LockInfoer interface {
+	Items() []string
+}
+
 type statusHandler struct {
-	queue *queue.Uniq
+	locker LockInfoer
 }
 
 func (h statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Goroutines: %v\n", runtime.NumGoroutine())
-	fmt.Fprintf(w, "Queue length: %v\n", h.queue.Len())
-	fmt.Fprintf(w, "Queue items: %v\n", h.queue.Items())
+	fmt.Fprintf(w, "goroutines: %v\n", runtime.NumGoroutine())
+	fmt.Fprintf(w, "background locker items: %v\n", h.locker.Items())
 	return
 }
