@@ -25,3 +25,11 @@ func ExampleNewFromURL() {
 	// error: could not parse url string to Tile struct
 	// error: could not parse url string to Tile struct
 }
+
+func ExampleTile_Filepath() {
+	t := New(10, 1, 2, ".png", "map")
+	fmt.Println(t.Filepath("/var/cache/tiles"))
+
+	// Output:
+	// /var/cache/tiles/map/10/1/2.png
+}

@@ -4,6 +4,7 @@ package tile
 import (
 	"fmt"
 	"math"
+	"path"
 	"regexp"
 	"strconv"
 )
@@ -21,6 +22,14 @@ type Data []byte
 
 func (t Tile) String() string {
 	return fmt.Sprintf("Tile{Zoom:%v X:%v Y:%v Ext:%v Map:%v}", t.Zoom, t.X, t.Y, t.Ext, t.Map)
+}
+
+// Filepath returns metatile file path, based on basedir and coordinates.
+func (t Tile) Filepath(basedir string) string {
+	zoom := strconv.Itoa(t.Zoom)
+	x := strconv.Itoa(t.X)
+	y := strconv.Itoa(t.Y)
+	return path.Join(basedir, t.Map, zoom, x, y+t.Ext)
 }
 
 // New creates new Tile.
