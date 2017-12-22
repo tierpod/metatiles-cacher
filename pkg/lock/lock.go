@@ -2,8 +2,12 @@
 package lock
 
 import (
+	"errors"
 	"sync"
+	"time"
 )
+
+var ErrTimedOut = errors.New("wait timed out")
 
 // Lock is the basic struct with embedded *sync.Cond and map[string]interface{}
 type Lock struct {
@@ -41,13 +45,31 @@ func (l *Lock) Del(key string) {
 	l.cond.L.Unlock()
 }
 
-// Wait waits for broadcast message.
-func (l *Lock) Wait(key string) {
-	l.cond.L.Lock()
-	for hasKey(key, l.items) {
-		l.cond.Wait()
+// Wait waits for broadcast message. Use timeout in seconds for waiting. If timeout exceeded, return
+// ErrTimedOut.
+func (l *Lock) Wait(key string, timeout int) error {
+	// create done channel for notify
+	done := make(chan struct{})
+
+	// run background waiter. close done channel if Wait() complete.
+	go func() {
+		l.cond.L.Lock()
+		for hasKey(key, l.items) {
+			l.cond.Wait()
+		}
+		l.cond.L.Unlock()
+		close(done)
+	}()
+
+	// return ErrTimedOut if timeout exceeded
+	select {
+	case <-time.After(time.Duration(timeout) * time.Second):
+		return ErrTimedOut
+	// do nothing if Wait() complete successful
+	case <-done:
 	}
-	l.cond.L.Unlock()
+
+	return nil
 }
 
 // HasKey checks if key contains in Lock.

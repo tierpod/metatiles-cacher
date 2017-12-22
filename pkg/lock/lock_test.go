@@ -3,6 +3,7 @@ package lock
 import (
 	"fmt"
 	"sort"
+	"testing"
 	"time"
 )
 
@@ -53,7 +54,7 @@ func ExampleLock_Wait() {
 	go func() {
 		if l.HasKey("key1") {
 			fmt.Println("waiting for broadcast message from Del")
-			l.Wait("key1")
+			l.Wait("key1", 1)
 		}
 	}()
 
@@ -64,4 +65,21 @@ func ExampleLock_Wait() {
 	// Output:
 	// waiting for broadcast message from Del
 	// done
+}
+
+func TestLockWaitTimeout(t *testing.T) {
+	l := New()
+	l.Add("key")
+	defer l.Del("key")
+
+	go func() {
+		if l.HasKey("key") {
+			err := l.Wait("key", 1)
+			if err == nil {
+				t.Errorf("expected %s, got nil error", ErrTimedOut)
+			}
+		}
+	}()
+
+	time.Sleep(2 * time.Second)
 }

@@ -28,7 +28,7 @@ type MetatileCacheReadWriter interface {
 type LockWaiter interface {
 	Add(key string)
 	Del(key string)
-	Wait(key string)
+	Wait(key string, timout int) error
 	HasKey(key string) bool
 }
 
@@ -86,7 +86,12 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// if key found in locker struct, wait while Del will be executed
 	if h.locker.HasKey(mt.Filepath("")) {
 		h.logger.Printf("[DEBUG] wait for another handler complete fetching")
-		h.locker.Wait(mt.Filepath(""))
+		err := h.locker.Wait(mt.Filepath(""), h.cfg.Fetch.QueueTimeout)
+		if err != nil {
+			h.logger.Printf("[ERROR] %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	h.logger.Printf("[DEBUG] try get tile from cache")
