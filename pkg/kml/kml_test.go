@@ -39,6 +39,6 @@ func ExampleExtractRegion() {
 
 	// Output:
 	// region:
-	//  polygon: [LatLong{77.7--168.25} LatLong{77.7--179.9999} LatLong{58.1--179.9999} LatLong{58.1--168.25} LatLong{77.7--168.25}]
-	//  polygon: [LatLong{84.52666-39.6908} LatLong{84.38487-179.9999} LatLong{26.27883-179.9999} LatLong{22.062707-142.084541} LatLong{84.52666-39.6908}]
+	//  polygon: [{Lat:77.7 Long:-168.25} {Lat:77.7 Long:-179.9999} {Lat:58.1 Long:-179.9999} {Lat:58.1 Long:-168.25} {Lat:77.7 Long:-168.25}]
+	//  polygon: [{Lat:84.52666 Long:39.6908} {Lat:84.38487 Long:179.9999} {Lat:26.27883 Long:179.9999} {Lat:22.062707 Long:142.084541} {Lat:84.52666 Long:39.6908}]
 }

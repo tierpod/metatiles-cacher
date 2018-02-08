@@ -9,8 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tierpod/metatiles-cacher/pkg/latlong"
-	"github.com/tierpod/metatiles-cacher/pkg/polygon"
+	"github.com/tierpod/go-osm/point"
 )
 
 // KML is the root space of kml file.
@@ -31,7 +30,7 @@ type Polygon struct {
 }
 
 // Coordinates is the slice of LatLong points.
-type Coordinates []latlong.LatLong
+type Coordinates []point.LatLong
 
 // UnmarshalXML unmarshals string to LatLong coordinates.
 func (c *Coordinates) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -40,7 +39,7 @@ func (c *Coordinates) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 		return err
 	}
 
-	var ll []latlong.LatLong
+	var ll []point.LatLong
 
 	for _, s := range strings.Split(strings.TrimSpace(content), "\n") {
 		l := strings.Split(s, ",")
@@ -55,7 +54,7 @@ func (c *Coordinates) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 			return err
 		}
 
-		ll = append(ll, latlong.LatLong{Lat: lat, Long: long})
+		ll = append(ll, point.LatLong{Lat: lat, Long: long})
 	}
 
 	*c = ll
@@ -63,7 +62,7 @@ func (c *Coordinates) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 }
 
 // ExtractRegion extracts polygons of LinearRing points from kml file.
-func ExtractRegion(r io.Reader) (polygon.Region, error) {
+func ExtractRegion(r io.Reader) (point.Region, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -75,9 +74,9 @@ func ExtractRegion(r io.Reader) (polygon.Region, error) {
 		return nil, err
 	}
 
-	var region polygon.Region
+	var region point.Region
 	for _, p := range kml.MultiGeometry.Region {
-		polygon := polygon.Polygon(p.Coordinates)
+		polygon := point.Polygon(p.Coordinates)
 		region = append(region, polygon)
 	}
 
