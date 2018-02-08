@@ -1,51 +1,33 @@
-cache:
+http:
   bind: localhost:8080
-  use_writer: true # write to cache?
-  use_source: true # get tiles from remote sources?
-  max_age: 86400   # Cache-Control: max-age header
-  x_token: 123     # X-Token header for access to /status
+  x_token: 123 # X-Token header for access to admin entrypoints
+  headers:
+    "Cache-Control": "max-age=86400"
+    "CORS": "*"
 
 log:
   datetime: true
   debug: true
 
-filecache:
-  root_dir: /tmp/metatiles-cacher
+cache:
+  dir: /tmp/metatiles-cacher
 
 httpclient:
-  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
+  headers:
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:56.0) Gecko/20100101 Firefox/56.0"
 
 sources:
-  - name: testsrc1
-    url: http://tilesrv1/style/{tile}
+  # write cache to {cache.dir}/testsrc1 directory
+  testsrc1:
+    url: http://tilesrv1/style/{z}/{x}/{y}.png
 
-  - name: testsrc2
-    url: http://testsrv2/style/{tile}?api_key=123
-    cache_dir: test
-
-  - name: testsrc3
-    url: http://testsrv3/style/{tile}
-    cache_dir: test
-    # define zoom levels for this style
-    zoom:
-      min: 1
-      max: 19
-    # redefine zoom levels if point inside this region
-    # yaml generates from geofabrik.de kml file
-    region:
-      file: testdata/test_region.yaml
-      zoom:
-        min: 1
-        max: 10
-
-  - name: testsrc4
-    url: http://testsrv4/style/{tile}
-    cache_dir: test
-    # define zoom levels for this style
-    zoom:
-      min: 1
-      max: 19
-    # redefine zoom levels if point inside this region
-    # yaml generates from geofabrik.de kml file
+  # write cache to {root_dir}/test directory but download from another server
+  testsrc2:
+    url: http://testsrv2/style/{z}/{x}/{y}.png?key=123
+    # define max zoom level for this style
+    max_zoom: 14
+    # enlarge max zoom level if point inside this region
+    # kml downloaded from geofabrik.de
     region:
       file: testdata/test_region.kml
+      max_zoom: 17
