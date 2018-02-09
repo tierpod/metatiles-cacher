@@ -107,6 +107,7 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, t tile.Tile, mimetype
 	}
 	w.Header().Set("Content-Type", mimetype)
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	w.Write(data)
 }
 
 func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, mimetype, URLTmpl string) {
