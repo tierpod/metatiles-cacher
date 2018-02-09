@@ -6,9 +6,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/tierpod/go-osm/metatile"
 	"github.com/tierpod/go-osm/point"
 	"github.com/tierpod/go-osm/tile"
+
 	"github.com/tierpod/metatiles-cacher/pkg/config"
+	"github.com/tierpod/metatiles-cacher/pkg/fetch"
+	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
@@ -22,6 +26,7 @@ type mapsHandler struct {
 	logger *log.Logger
 	cache  CacheReader
 	cfg    *config.Config
+	fs     *fetch.Service
 }
 
 func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -76,8 +81,8 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.logger.Printf("[DEBUG] %v: not found in cache, get from remote source", t)
-	//h.replyFromSource()
-	//h.sendToFetchService()
+	h.replyFromSource(w, t, mimetype, source.URL)
+	h.addToFS(t, source.URL)
 	return
 }
 
@@ -102,4 +107,32 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, t tile.Tile, mimetype
 	}
 	w.Header().Set("Content-Type", mimetype)
 	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+}
+
+func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, mimetype, URLTmpl string) {
+	url := fetch.MakeURL(URLTmpl, t.Zoom, t.X, t.Y)
+	httpc := httpclient.New(h.cfg.HTTPClient.Headers, h.cfg.HTTPClient.Timeout)
+	data, err := httpc.GetBody(url)
+	if err != nil {
+		h.logger.Printf("[ERROR] %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	for k, v := range h.cfg.HTTP.Headers {
+		w.Header().Set(k, v)
+	}
+	w.Header().Set("Content-Type", mimetype)
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	w.Write(data)
+}
+
+func (h mapsHandler) addToFS(t tile.Tile, URLTmpl string) {
+	if !h.cfg.Fetch.Enabled {
+		h.logger.Printf("[WARN] fetch service disabled")
+		return
+	}
+
+	mt := metatile.NewFromTile(t)
+	h.fs.Add(mt, URLTmpl)
 }

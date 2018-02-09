@@ -15,6 +15,7 @@ import (
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
+	"github.com/tierpod/metatiles-cacher/pkg/fetch"
 	"github.com/tierpod/metatiles-cacher/pkg/logger"
 )
 
@@ -51,7 +52,9 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	// init fetch service
+	// init and start background fetch service
+	fs := fetch.NewService(cfg, metaCache, logger)
+	fs.Start()
 
 	// init token store for admin entrypoints
 	// tokens = newTokenStore(cfg.HTTP.XToken, logger)
@@ -61,21 +64,18 @@ func main() {
 	// 		statusHandler{locker: locker}, cfg.Service.XToken, logger,
 	// 	),
 	// 	logger))
-	// http.Handle("/static/", handler.LogConnection(
-	// 	http.StripPrefix("/static/", http.FileServer(http.Dir("static"))), logger),
-	// )
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/maps/", mapsHandler{
 		cfg:    cfg,
 		logger: logger,
 		cache:  metaCache,
+		fs:     fs,
 	})
-	/*http.Handle("/fetch/", handler.LogConnection(
-	fetchHandler{
-		logger:  logger,
-		cache:   fc,
-		cfg:     cfg,
-		fetcher: fetcher,
-	}, logger))*/
+	http.Handle("/fetch/", fetchHandler{
+		logger: logger,
+		cfg:    cfg,
+		fs:     fs,
+	})
 
 	logger.Printf("Starting web server on: %v", cfg.HTTP.Bind)
 	err = http.ListenAndServe(cfg.HTTP.Bind, nil)

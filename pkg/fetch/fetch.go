@@ -32,7 +32,7 @@ type Service struct {
 
 // NewService creates new fetch Service.
 func NewService(cfg *config.Config, cw CacheWriter, logger *log.Logger) *Service {
-	queue := make(chan job)
+	queue := make(chan job, cfg.Fetch.Buffer)
 	jm := newJobsMap()
 	s := &Service{
 		logger:  logger,
@@ -144,8 +144,8 @@ func (s *Service) fetch(mt metatile.Metatile, URLTmpl string) ([][]byte, error) 
 // MakeURL replaces {z}, {x}, {y} placeholders inside string `s` with values.
 func MakeURL(s string, z, x, y int) string {
 	url := strings.Replace(s, "{z}", strconv.Itoa(z), 1)
-	url = strings.Replace(s, "{x}", strconv.Itoa(x), 1)
-	url = strings.Replace(s, "{y}", strconv.Itoa(y), 1)
+	url = strings.Replace(url, "{x}", strconv.Itoa(x), 1)
+	url = strings.Replace(url, "{y}", strconv.Itoa(y), 1)
 
 	return url
 }
