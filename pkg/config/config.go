@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/tierpod/go-osm/point"
 	"github.com/tierpod/metatiles-cacher/pkg/kml"
@@ -25,6 +26,7 @@ const (
 // Config is the root of configuration.
 type Config struct {
 	Cache      Cache             `yaml:"cache"`
+	Fetch      Fetch             `yaml:"fetch"`
 	HTTP       HTTP              `yaml:"http"`
 	HTTPClient HTTPClient        `yaml:"httpclient"`
 	Log        Log               `yaml:"log"`
@@ -53,6 +55,7 @@ type HTTP struct {
 // HTTPClient contains http client configuration.
 type HTTPClient struct {
 	Headers map[string]string `yaml:"headers"`
+	Timeout time.Duration     `yaml:"timeout"`
 }
 
 // Log contains logger configuration.
@@ -64,6 +67,13 @@ type Log struct {
 // Cache contains file cache configuration.
 type Cache struct {
 	Dir string `yaml:"dir"`
+}
+
+// Fetch contains fetchsvc.Service configuration
+type Fetch struct {
+	Enabled bool `yaml:"enabled"`
+	Workers int  `yaml:"workers"`
+	Buffer  int  `yaml:"buffer"`
 }
 
 // Source contains source configuration.
@@ -118,6 +128,9 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal config: %v", err)
 	}
+
+	// convert timeout to seconds
+	c.HTTPClient.Timeout = c.HTTPClient.Timeout * time.Second
 
 	for name, s := range c.Sources {
 		// if Source.MaxZoom is not set, use defaults.

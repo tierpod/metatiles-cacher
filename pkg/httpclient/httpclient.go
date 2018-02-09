@@ -4,12 +4,33 @@ package httpclient
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"net/http"
+	"time"
 )
 
+// HTTPClient is the wrapper around http.Client for storing custom settings.
+type HTTPClient struct {
+	client *http.Client
+	Header http.Header
+}
+
+// New creates new https client. Set `headers` as http headers. Use `timeout` as connection timeout.
+func New(headers map[string]string, timeout time.Duration) *HTTPClient {
+	client := &http.Client{Timeout: timeout}
+	header := http.Header{}
+
+	for k, v := range headers {
+		header.Set(k, v)
+	}
+
+	return &HTTPClient{
+		client: client,
+		Header: header,
+	}
+}
+
 // GetBody gets body data by url.
-func GetBody(url, ua string) (body io.Reader, err error) {
+func (c *HTTPClient) GetBody(url string) (body []byte, err error) {
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -17,7 +38,7 @@ func GetBody(url, ua string) (body io.Reader, err error) {
 		return nil, fmt.Errorf("httpclient: %v", err)
 	}
 
-	req.Header.Set("User-Agent", ua)
+	req.Header = c.Header
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -35,5 +56,5 @@ func GetBody(url, ua string) (body io.Reader, err error) {
 		return nil, fmt.Errorf("httpclient: %v", err)
 	}
 
-	return &buf, nil
+	return buf.Bytes(), nil
 }
