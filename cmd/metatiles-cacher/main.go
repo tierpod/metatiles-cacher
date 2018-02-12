@@ -57,13 +57,14 @@ func main() {
 	fs.Start()
 
 	// init token store for admin entrypoints
-	// tokens = newTokenStore(cfg.HTTP.XToken, logger)
+	tokens := newTokenStore(cfg.HTTP.XToken, logger)
 
-	// http.Handle("/status", handler.LogConnection(
-	// 	handler.XToken(
-	// 		statusHandler{locker: locker}, cfg.Service.XToken, logger,
-	// 	),
-	// 	logger))
+	http.Handle("/status", tokens.Middleware(
+		statusHandler{
+			logger: logger,
+			fs:     fs,
+		},
+	))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/maps/", mapsHandler{
 		cfg:    cfg,

@@ -2,21 +2,23 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"runtime"
+
+	"github.com/tierpod/metatiles-cacher/pkg/fetch"
 )
 
-// LockInfoer provides interface for get items locker.
-type LockInfoer interface {
-	Items() []string
-}
-
 type statusHandler struct {
-	locker LockInfoer
+	logger *log.Logger
+	fs     *fetch.Service
 }
 
 func (h statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "goroutines: %v\n", runtime.NumGoroutine())
-	fmt.Fprintf(w, "background locker items: %v\n", h.locker.Items())
+
+	jobs := h.fs.Jobs()
+	fmt.Fprintf(w, "Jobs in progress (%v):\n", len(jobs))
+	fmt.Fprintf(w, "%v\n", jobs)
 	return
 }
