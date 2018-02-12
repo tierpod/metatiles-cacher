@@ -48,7 +48,6 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	minZoom := config.MinZoom
 	maxZoom := source.MaxZoom
 	if t.Zoom > maxZoom && source.HasRegion() {
 		p := point.ZXY{Z: t.Zoom, X: t.X, Y: t.Y}
@@ -59,7 +58,7 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if t.Zoom < minZoom || t.Zoom > maxZoom {
+	if t.Zoom < config.MinZoom || t.Zoom > maxZoom {
 		h.logger.Printf("[ERROR] forbidden zoom level (%v) for Source(%v)", t.Zoom, t.Style)
 		w.WriteHeader(http.StatusForbidden)
 		return
@@ -111,7 +110,7 @@ func (h mapsHandler) replyFromCache(w http.ResponseWriter, t tile.Tile, mimetype
 }
 
 func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, mimetype, URLTmpl string) {
-	url := fetch.MakeURL(URLTmpl, t.Zoom, t.X, t.Y)
+	url := util.MakeURL(URLTmpl, t.Zoom, t.X, t.Y)
 	httpc := httpclient.New(h.cfg.HTTPClient.Headers, h.cfg.HTTPClient.Timeout)
 	data, err := httpc.GetBody(url)
 	if err != nil {

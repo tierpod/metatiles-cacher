@@ -44,17 +44,18 @@ func NewService(cfg *config.Config, cw CacheWriter, logger *log.Logger) *Service
 	return s
 }
 
-// Start starts Service in background.
+// Start starts fetch Service in background.
 func (s *Service) Start() {
 	go func() {
 		for {
 			job := <-s.queue
-			go s.fetchAndWrite(job)
+			go s.process(job)
 		}
 	}()
 }
 
-// Add adds job based on `mt` and `URLTmpl` to fetching queue. Skip if item already in queue.
+// Add adds job for metatile `mt` and url template `URLTmpl` to fetching queue. Skip if item already
+// in queue.
 func (s *Service) Add(mt metatile.Metatile, URLTmpl string) {
 	if s.jobsMap.exists(mt) {
 		s.logger.Printf("[DEBUG] skip job %v: already in process", mt)
@@ -69,12 +70,13 @@ func (s *Service) Add(mt metatile.Metatile, URLTmpl string) {
 	}
 }
 
-// Jobs returns jobs from current fetching queue.
+// Jobs returns jobs who are currently in process.
 func (s *Service) Jobs() []metatile.Metatile {
 	return s.jobsMap.items()
 }
 
-func (s *Service) fetchAndWrite(j job) error {
+// process starts processing job `j`.
+func (s *Service) process(j job) error {
 	start := time.Now()
 	s.logger.Printf("[DEBUG] start job: %+v", j)
 
@@ -109,12 +111,12 @@ func (s *Service) fetch(mt metatile.Metatile, URLTmpl string) ([][]byte, error) 
 
 	count := mt.Size() * mt.Size()
 
-	jobs := make(chan fetchJob, count)
-	results := make(chan fetchResult, count)
+	jobs := make(chan workerJob, count)
+	results := make(chan workerResult, count)
 	shutdown := make(chan interface{})
 
 	for w := 0; w < s.cfg.Fetch.Workers; w++ {
-		go fetchWorker(jobs, results, shutdown, s.cfg.HTTPClient, s.logger)
+		go worker(jobs, results, shutdown, s.cfg.HTTPClient, s.logger)
 	}
 
 	data := make([][]byte, metatile.Area)
@@ -122,7 +124,7 @@ func (s *Service) fetch(mt metatile.Metatile, URLTmpl string) ([][]byte, error) 
 		for _, y := range yy {
 			i := metatile.XYToIndex(x, y)
 			url := util.MakeURL(URLTmpl, mt.Zoom, x, y)
-			jobs <- fetchJob{index: i, url: url}
+			jobs <- workerJob{index: i, url: url}
 		}
 	}
 	close(jobs)

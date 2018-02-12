@@ -7,18 +7,18 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/httpclient"
 )
 
-type fetchJob struct {
+type workerJob struct {
 	index int
 	url   string
 }
 
-type fetchResult struct {
+type workerResult struct {
 	index int
 	data  []byte
 	err   error
 }
 
-func fetchWorker(jobs <-chan fetchJob, results chan<- fetchResult, shutdown <-chan interface{}, cfg config.HTTPClient, logger *log.Logger) {
+func worker(jobs <-chan workerJob, results chan<- workerResult, shutdown <-chan interface{}, cfg config.HTTPClient, logger *log.Logger) {
 	logger.Printf("[DEBUG] start fetch worker")
 
 	// create new httpclient with internal connection pool
@@ -35,12 +35,12 @@ func fetchWorker(jobs <-chan fetchJob, results chan<- fetchResult, shutdown <-ch
 
 			// test error
 			// if j.index == 5 {
-			// 	results <- fetchResult{index: j.index, data: nil, err: fmt.Errorf("test error")}
+			// 	results <- workerResult{index: j.index, data: nil, err: fmt.Errorf("test error")}
 			// 	return
 			// }
 
 			if err != nil {
-				results <- fetchResult{index: j.index, data: nil, err: err}
+				results <- workerResult{index: j.index, data: nil, err: err}
 				logger.Printf("[ERROR] fetch: %v", err)
 				return
 			}
@@ -48,7 +48,7 @@ func fetchWorker(jobs <-chan fetchJob, results chan<- fetchResult, shutdown <-ch
 			// debug slow connections
 			// time.Sleep(1 * time.Second)
 
-			results <- fetchResult{index: j.index, data: body, err: nil}
+			results <- workerResult{index: j.index, data: body, err: nil}
 		}
 	}
 
