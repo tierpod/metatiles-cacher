@@ -56,3 +56,12 @@ func ExampleMimetype() {
 	// .mvt application/vnd.mapbox-vector-tile
 	// error: unknown mimetype for extension ".unknown"
 }
+
+func ExampleMakeURL() {
+	template := "http://test/{z}/{x}/{y}.png"
+	result := MakeURL(template, 10, 1, 2)
+	fmt.Println(result)
+
+	// Output:
+	// http://test/10/1/2.png
+}

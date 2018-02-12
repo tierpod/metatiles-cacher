@@ -4,6 +4,8 @@ package util
 import (
 	"crypto/md5"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 // MakeIntSlice makes slice of integers from min to max, not included max value.
@@ -32,4 +34,13 @@ func Mimetype(ext string) (string, error) {
 	default:
 		return "", fmt.Errorf("unknown mimetype for extension \"%v\"", ext)
 	}
+}
+
+// MakeURL replaces {z}, {x}, {y} placeholders inside string `s` with values.
+func MakeURL(s string, z, x, y int) string {
+	url := strings.Replace(s, "{z}", strconv.Itoa(z), 1)
+	url = strings.Replace(url, "{x}", strconv.Itoa(x), 1)
+	url = strings.Replace(url, "{y}", strconv.Itoa(y), 1)
+
+	return url
 }

@@ -3,12 +3,11 @@ package fetch
 
 import (
 	"log"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/tierpod/go-osm/metatile"
 	"github.com/tierpod/metatiles-cacher/pkg/config"
+	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
 
 // CacheWriter provides interface for writing data to metatile cache.
@@ -122,7 +121,7 @@ func (s *Service) fetch(mt metatile.Metatile, URLTmpl string) ([][]byte, error) 
 	for _, x := range xx {
 		for _, y := range yy {
 			i := metatile.XYToIndex(x, y)
-			url := MakeURL(URLTmpl, mt.Zoom, x, y)
+			url := util.MakeURL(URLTmpl, mt.Zoom, x, y)
 			jobs <- fetchJob{index: i, url: url}
 		}
 	}
@@ -139,13 +138,4 @@ func (s *Service) fetch(mt metatile.Metatile, URLTmpl string) ([][]byte, error) 
 	close(shutdown)
 
 	return data, nil
-}
-
-// MakeURL replaces {z}, {x}, {y} placeholders inside string `s` with values.
-func MakeURL(s string, z, x, y int) string {
-	url := strings.Replace(s, "{z}", strconv.Itoa(z), 1)
-	url = strings.Replace(url, "{x}", strconv.Itoa(x), 1)
-	url = strings.Replace(url, "{y}", strconv.Itoa(y), 1)
-
-	return url
 }
