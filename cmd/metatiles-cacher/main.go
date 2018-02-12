@@ -59,13 +59,19 @@ func main() {
 	// init token store for admin entrypoints
 	tokens := newTokenStore(cfg.HTTP.XToken, logger)
 
+	// admin handlers
 	http.Handle("/status", tokens.Middleware(
 		statusHandler{
 			logger: logger,
 			fs:     fs,
+			cfg:    cfg,
 		},
 	))
+
+	// static handler
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	// service handlers
 	http.Handle("/maps/", mapsHandler{
 		cfg:    cfg,
 		logger: logger,

@@ -52,12 +52,14 @@ func ExampleLoad() {
 
 	fmt.Printf("source.URL: '%v'\n", s.URL)
 	fmt.Printf("source.MaxZoom: %+v\n", s.MaxZoom)
+	fmt.Printf("source.LastUpdate: '%v'\n", s.LastUpdate)
 	fmt.Printf("source.Region.File: '%v'\n", s.Region.File)
 	fmt.Printf("source.Region.MaxZoom: %+v\n", s.Region.MaxZoom)
 
 	// Output:
 	// source.URL: 'http://testsrv2/style/{z}/{x}/{y}.png?key=123'
 	// source.MaxZoom: 14
+	// source.LastUpdate: '0001-01-01 00:00:00 +0000 UTC'
 	// source.Region.File: 'testdata/test_region.kml'
 	// source.Region.MaxZoom: 17
 }

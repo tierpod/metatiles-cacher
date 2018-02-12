@@ -7,9 +7,10 @@ import (
 	"os"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/tierpod/go-osm/point"
 	"github.com/tierpod/metatiles-cacher/pkg/kml"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -17,10 +18,12 @@ const (
 	MinZoom = 1
 	// MaxZoom is the default source max_zoom value.
 	MaxZoom = 18
-	// MediumZoom used in cache expire
+	// MediumZoom used in cache expire.
 	MediumZoom = 13
-	// LowZoom used in cache expire
+	// LowZoom used in cache expire.
 	LowZoom = 9
+	// LastUpdateExpire used for cache Source.LastUpdateFlag mtime.
+	LastUpdateExpire = 60 * time.Second
 )
 
 // Config is the root of configuration.
@@ -34,12 +37,36 @@ type Config struct {
 }
 
 // Source returns source configuration from Sources list by given name. If it does not exist, return error.
-func (c Config) Source(name string) (Source, error) {
+func (c *Config) Source(name string) (Source, error) {
 	if s, found := c.Sources[name]; found {
 		return s, nil
 	}
 
 	return Source{}, fmt.Errorf("source not found in sources")
+}
+
+// MonitorLastUpdate starts background monitoring of Source.LastUpdateFlag.
+func (c *Config) MonitorLastUpdate() {
+	ticker := time.NewTicker(c.Cache.LastUpdateExpire)
+	go func(c *Config) {
+		for range ticker.C {
+			for name, s := range c.Sources {
+				// skip if LastUpdateFlag is not configured
+				if s.LastUpdateFlag == "" {
+					continue
+				}
+
+				mtime, err := os.Stat(s.LastUpdateFlag)
+				if err != nil {
+					s.LastUpdateTime = time.Time{}
+				} else {
+					s.LastUpdateTime = mtime.ModTime()
+				}
+
+				c.Sources[name] = s
+			}
+		}
+	}(c)
 }
 
 // HTTP contains web service configuration.
@@ -66,7 +93,8 @@ type Log struct {
 
 // Cache contains file cache configuration.
 type Cache struct {
-	Dir string `yaml:"dir"`
+	Dir              string        `yaml:"dir"`
+	LastUpdateExpire time.Duration `yaml:"last_update_expire"`
 }
 
 // Fetch contains fetchsvc.Service configuration
@@ -78,9 +106,11 @@ type Fetch struct {
 
 // Source contains source configuration.
 type Source struct {
-	URL     string `yaml:"url"`
-	MaxZoom int    `yaml:"max_zoom"`
-	Region  Region `yaml:"region"`
+	URL            string `yaml:"url"`
+	MaxZoom        int    `yaml:"max_zoom"`
+	Region         Region `yaml:"region"`
+	LastUpdateFlag string `yaml:"last_update"`
+	LastUpdateTime time.Time
 }
 
 // HasRegion return true if source has region section. Otherwise return false.
@@ -99,8 +129,8 @@ type Region struct {
 	Polygons point.Region
 }
 
-func (r *Region) readKML(path string) error {
-	file, err := os.Open(path)
+func (r *Region) readKML(p string) error {
+	file, err := os.Open(p)
 	if err != nil {
 		return err
 	}
@@ -115,11 +145,11 @@ func (r *Region) readKML(path string) error {
 	return nil
 }
 
-// Load loads yaml file and creates new service configuration.
-func Load(path string) (*Config, error) {
+// Load loads yaml file `p` and creates new service configuration.
+func Load(p string) (*Config, error) {
 	var c Config
 
-	data, err := ioutil.ReadFile(path)
+	data, err := ioutil.ReadFile(p)
 	if err != nil {
 		return nil, fmt.Errorf("read config: %v", err)
 	}
@@ -131,6 +161,11 @@ func Load(path string) (*Config, error) {
 
 	// convert timeout to seconds
 	c.HTTPClient.Timeout = c.HTTPClient.Timeout * time.Second
+
+	if c.Cache.LastUpdateExpire == 0 {
+		c.Cache.LastUpdateExpire = LastUpdateExpire
+	}
+	c.Cache.LastUpdateExpire = c.Cache.LastUpdateExpire * time.Second
 
 	for name, s := range c.Sources {
 		// if Source.MaxZoom is not set, use defaults.
@@ -151,8 +186,19 @@ func Load(path string) (*Config, error) {
 			}
 		}
 
+		// load default last update timestamp
+		if s.LastUpdateFlag != "" {
+			mtime, err := os.Stat(s.LastUpdateFlag)
+			if err != nil {
+				return nil, err
+			}
+
+			s.LastUpdateTime = mtime.ModTime()
+		}
+
 		c.Sources[name] = s
 	}
 
+	c.MonitorLastUpdate()
 	return &c, nil
 }

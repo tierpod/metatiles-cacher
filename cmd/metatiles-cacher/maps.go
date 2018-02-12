@@ -76,12 +76,17 @@ func (h mapsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if found {
 		etag := `"` + util.DigestString(mtime.String()) + `"`
 		h.replyFromCache(w, t, mimetype, etag, r.Header.Get("If-None-Match"))
+
+		if mtime.Before(source.LastUpdateTime) {
+			h.logger.Printf("[WARN] %v is outdated, send to fetch service", t)
+			h.sendToFS(t, source.URL)
+		}
 		return
 	}
 
 	h.logger.Printf("[DEBUG] %v: not found in cache, get from remote source", t)
 	h.replyFromSource(w, t, mimetype, source.URL)
-	h.addToFS(t, source.URL)
+	h.sendToFS(t, source.URL)
 	return
 }
 
@@ -127,7 +132,7 @@ func (h mapsHandler) replyFromSource(w http.ResponseWriter, t tile.Tile, mimetyp
 	w.Write(data)
 }
 
-func (h mapsHandler) addToFS(t tile.Tile, URLTmpl string) {
+func (h mapsHandler) sendToFS(t tile.Tile, URLTmpl string) {
 	if !h.cfg.Fetch.Enabled {
 		h.logger.Printf("[WARN] fetch service disabled")
 		return

@@ -92,7 +92,7 @@ func (c *MetatileCache) Write(mt metatile.Metatile, data [][]byte) error {
 		return err
 	}
 
-	c.logger.Printf("[DEBUG] cache: wrote %v", p)
+	c.logger.Printf("[INFO] cache: wrote %v", p)
 
 	return nil
 }

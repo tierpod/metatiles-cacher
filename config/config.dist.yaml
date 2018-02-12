@@ -3,7 +3,7 @@ http:
   x_token: 123 # X-Token header for access to admin entrypoints
   headers:
     "Cache-Control": "max-age=86400"
-    "CORS": "*"
+    "Access-Control-Allow-Origin": "*"
 
 log:
   datetime: true
@@ -11,6 +11,7 @@ log:
 
 cache:
   dir: /tmp/metatiles-cacher
+  last_update_expire: 3600
 
 httpclient:
   timeout: 30
@@ -32,6 +33,7 @@ sources:
     url: http://testsrv2/style/{z}/{x}/{y}.png?key=123
     # define max zoom level for this style
     max_zoom: 14
+    last_update: /tmp/metatiles-cacher/planet-import-complete
     # enlarge max zoom level if point inside this region
     # kml downloaded from geofabrik.de
     region:
