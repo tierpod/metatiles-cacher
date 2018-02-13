@@ -1,10 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"runtime"
+	"time"
+
+	"github.com/tierpod/go-osm/metatile"
 
 	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/fetch"
@@ -16,19 +19,32 @@ type statusHandler struct {
 	cfg    *config.Config
 }
 
+type statusResult struct {
+	Goroutines     int                  `json:"goroutines"`
+	LastUpdateTime map[string]time.Time `json:"last_update_time"`
+	Jobs           []metatile.Metatile  `json:"jobs"`
+}
+
 func (h statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "goroutines: %v\n", runtime.NumGoroutine())
-
-	fmt.Fprintf(w, "last update time:\n")
+	lu := make(map[string]time.Time, len(h.cfg.Sources))
 	for name, source := range h.cfg.Sources {
-		fmt.Fprintf(w, " %v: %v\n", name, source.LastUpdateTime)
+		lu[name] = source.LastUpdateTime
 	}
 
-	jobs := h.fs.Jobs()
-	fmt.Fprintf(w, "jobs in progress (%v):\n", len(jobs))
-	for _, j := range jobs {
-		fmt.Fprintf(w, " %v\n", j)
+	status := statusResult{
+		Goroutines:     runtime.NumGoroutine(),
+		LastUpdateTime: lu,
+		Jobs:           h.fs.Jobs(),
 	}
 
+	result, err := json.Marshal(status)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.logger.Printf("[ERROR] status result: %v", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(result)
 	return
 }
