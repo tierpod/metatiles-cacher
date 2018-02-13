@@ -167,6 +167,15 @@ func Load(p string) (*Config, error) {
 	}
 	c.Cache.LastUpdateExpire = c.Cache.LastUpdateExpire * time.Second
 
+	// default fetch section values (if not set)
+	if c.Fetch.Buffer == 0 {
+		c.Fetch.Buffer = 1
+	}
+
+	if c.Fetch.Workers == 0 {
+		c.Fetch.Workers = 1
+	}
+
 	for name, s := range c.Sources {
 		// if Source.MaxZoom is not set, use defaults.
 		if s.MaxZoom == 0 {
