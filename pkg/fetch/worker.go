@@ -39,16 +39,10 @@ func worker(jobs <-chan workerJob, results chan<- workerResult, shutdown <-chan 
 			// 	return
 			// }
 
-			if err != nil {
-				results <- workerResult{index: j.index, data: nil, err: err}
-				logger.Printf("[ERROR] fetch: %v", err)
-				return
-			}
-
-			// debug slow connections
+			// test slow connections
 			// time.Sleep(1 * time.Second)
 
-			results <- workerResult{index: j.index, data: body, err: nil}
+			results <- workerResult{index: j.index, data: body, err: err}
 		}
 	}
 
