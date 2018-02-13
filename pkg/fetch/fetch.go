@@ -2,6 +2,7 @@
 package fetch
 
 import (
+	"errors"
 	"log"
 	"time"
 
@@ -9,6 +10,9 @@ import (
 	"github.com/tierpod/metatiles-cacher/pkg/config"
 	"github.com/tierpod/metatiles-cacher/pkg/util"
 )
+
+// ErrJobInQueue is the error if job already in queue (in process).
+var ErrJobInQueue = errors.New("job already in queue")
 
 // CacheWriter provides interface for writing data to metatile cache.
 type CacheWriter interface {
@@ -54,8 +58,8 @@ func (s *Service) Start() {
 	}()
 }
 
-// Add adds job for metatile `mt` and url template `URLTmpl` to fetching queue. Skip if item already
-// in queue.
+// Add adds job for metatile `mt` and url template `URLTmpl` to fetching queue and dont wait for result.
+// Skip if item already in queue.
 func (s *Service) Add(mt metatile.Metatile, URLTmpl string) {
 	if s.jobsMap.exists(mt) {
 		s.logger.Printf("[DEBUG] skip job %v: already in process", mt)
@@ -68,6 +72,20 @@ func (s *Service) Add(mt metatile.Metatile, URLTmpl string) {
 	case <-time.After(10 * time.Second):
 		s.logger.Printf("[ERROR] unable to add job to queue, timeout exceeded")
 	}
+}
+
+// AddWait adds job for metatile `mt` and url template `URLTmpl` to fetching queue and waits for complete.
+func (s *Service) AddWait(mt metatile.Metatile, URLTmpl string) error {
+	if s.jobsMap.exists(mt) {
+		return ErrJobInQueue
+	}
+
+	err := s.process(job{mt: mt, urlTmpl: URLTmpl})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Jobs returns jobs who are currently in process.

@@ -33,5 +33,18 @@ func (h fetchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.logger.Printf("[DEBUG] got request: %v", mt)
-	h.fs.Add(mt, source.URL)
+	err = h.fs.AddWait(mt, source.URL)
+	if err != nil {
+		if err == fetch.ErrJobInQueue {
+			w.WriteHeader(http.StatusAccepted)
+			h.logger.Printf("[WARN] %v already in queue, skip", t)
+			return
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		h.logger.Printf("[ERROR] %v", err)
+		return
+	}
+
+	return
 }
