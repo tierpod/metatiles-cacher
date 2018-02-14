@@ -20,7 +20,7 @@ type fetchHandler struct {
 func (h fetchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t, err := tile.NewFromURL(r.URL.Path)
 	if err != nil {
-		h.logger.Printf("[ERROR] %v", err)
+		h.logger.Printf("[ERROR] /fetch - %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -28,21 +28,21 @@ func (h fetchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	source, err := h.cfg.Source(mt.Style)
 	if err != nil {
-		h.logger.Printf("[ERROR] %v", err)
+		h.logger.Printf("[ERROR] /fetch -  %v", err)
 		return
 	}
 
-	h.logger.Printf("[DEBUG] got request: %v", mt)
+	h.logger.Printf("[DEBUG] /fetch - got request: %v", mt)
 	err = h.fs.AddWait(mt, source.URL)
 	if err != nil {
 		if err == fetch.ErrJobInQueue {
 			w.WriteHeader(http.StatusAccepted)
-			h.logger.Printf("[WARN] %v already in queue, skip", t)
+			h.logger.Printf("[WARN] /fetch - %v already in queue, skip", t)
 			return
 		}
 
 		w.WriteHeader(http.StatusInternalServerError)
-		h.logger.Printf("[ERROR] %v", err)
+		h.logger.Printf("[ERROR] /fetch - %v", err)
 		return
 	}
 

@@ -40,7 +40,7 @@ func (h statusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	result, err := json.Marshal(status)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.logger.Printf("[ERROR] status result: %v", err)
+		h.logger.Printf("[ERROR] /status - %v", err)
 		return
 	}
 

@@ -88,7 +88,7 @@ func main() {
 		fs:     fs,
 	})
 
-	logger.Printf("Starting web server on: %v", cfg.HTTP.Bind)
+	logger.Printf("[INFO] starting web server on: %v", cfg.HTTP.Bind)
 	err = http.ListenAndServe(cfg.HTTP.Bind, handlers.LoggingHandler(os.Stdout, r))
 	if err != nil {
 		logger.Fatal(err)

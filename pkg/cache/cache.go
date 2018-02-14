@@ -37,7 +37,7 @@ func NewMetatileCache(cfg config.Cache, logger *log.Logger) (*MetatileCache, err
 func (c *MetatileCache) Read(t tile.Tile) ([]byte, error) {
 	mt := metatile.NewFromTile(t)
 	p := mt.Filepath(c.cfg.Dir)
-	c.logger.Printf("[DEBUG] cache: read %v from metatile %v", t, p)
+	c.logger.Printf("[DEBUG] (cache) read %v from metatile %v", t, p)
 
 	f, err := os.Open(p)
 	if err != nil {
@@ -77,7 +77,7 @@ func (c *MetatileCache) Write(mt metatile.Metatile, data [][]byte) error {
 		os.Remove(f.Name())
 	}()
 
-	c.logger.Printf("[DEBUG] cache: write to temp file: %v", f.Name())
+	c.logger.Printf("[DEBUG] (cache) write to temp file: %v", f.Name())
 	err = mt.EncodeWrite(f, data)
 	if err != nil {
 		return err
@@ -92,8 +92,7 @@ func (c *MetatileCache) Write(mt metatile.Metatile, data [][]byte) error {
 		return err
 	}
 
-	c.logger.Printf("[INFO] cache: wrote %v", p)
-
+	c.logger.Printf("[INFO] (cache) wrote %v", p)
 	return nil
 }
 
@@ -102,7 +101,7 @@ func (c *MetatileCache) Write(mt metatile.Metatile, data [][]byte) error {
 func (c *MetatileCache) Check(t tile.Tile) (mtime time.Time, found bool) {
 	mt := metatile.NewFromTile(t)
 	p := mt.Filepath(c.cfg.Dir)
-	c.logger.Printf("[DEBUG] cache: check %v", p)
+	c.logger.Printf("[DEBUG] (cache) check %v", p)
 
 	stat, err := os.Stat(p)
 	if !os.IsNotExist(err) {

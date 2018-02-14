@@ -3,6 +3,7 @@ package fetch
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -22,6 +23,10 @@ type CacheWriter interface {
 type job struct {
 	mt      metatile.Metatile
 	urlTmpl string
+}
+
+func (j job) String() string {
+	return fmt.Sprintf("Job(%v)", j.mt)
 }
 
 // Service is the basic fetch service struct.
@@ -62,7 +67,7 @@ func (s *Service) Start() {
 // Skip if item already in queue.
 func (s *Service) Add(mt metatile.Metatile, URLTmpl string) {
 	if s.jobsMap.exists(mt) {
-		s.logger.Printf("[DEBUG] skip job %v: already in process", mt)
+		s.logger.Printf("[INFO] (fetch) skip job %v: already in process", mt)
 		return
 	}
 
@@ -70,7 +75,7 @@ func (s *Service) Add(mt metatile.Metatile, URLTmpl string) {
 	case s.queue <- job{mt: mt, urlTmpl: URLTmpl}:
 	// TODO: configure timeout?
 	case <-time.After(10 * time.Second):
-		s.logger.Printf("[ERROR] unable to add job to queue, timeout exceeded")
+		s.logger.Printf("[ERROR] (fetch) unable to add job (%v) to queue: timeout exceeded", mt)
 	}
 }
 
@@ -95,37 +100,37 @@ func (s *Service) Jobs() []metatile.Metatile {
 
 // process starts processing job `j`.
 func (s *Service) process(j job) error {
-	start := time.Now()
-	s.logger.Printf("[DEBUG] start job: %+v", j)
+	s.logger.Printf("[DEBUG] (fetch) start job: %+v", j)
 
 	s.jobsMap.add(j.mt)
 	defer func() {
 		s.jobsMap.delete(j.mt)
-		s.logger.Printf("[DEBUG] end job: %+v", j)
+		s.logger.Printf("[DEBUG] (fetch) complete job: %+v", j)
 	}()
 
 	data, err := s.fetch(j.mt, j.urlTmpl)
 	if err != nil {
-		s.logger.Printf("[ERROR] fetch: %v", err)
+		s.logger.Printf("[ERROR] (fetch) unable to fetch %v: %v", j, err)
 		return err
 	}
 
 	err = s.cw.Write(j.mt, data)
 	if err != nil {
-		s.logger.Printf("[ERROR] write: %v", err)
+		s.logger.Printf("[ERROR] (fetch) unable to write %v: %v", j, err)
 		return err
 	}
-
-	elapsed := time.Since(start)
-	s.logger.Printf("[INFO] fetch and write complete in %v", elapsed)
-
 	return nil
 }
 
 func (s *Service) fetch(mt metatile.Metatile, URLTmpl string) ([][]byte, error) {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		s.logger.Printf("[INFO] (fetch) complete download %v in %v", mt, elapsed)
+	}()
+
 	xx, yy := mt.XYBox()
-	s.logger.Printf("[INFO] fetch style(%v) z(%v) xx(%v-%v) yy(%v-%v)", mt.Style, mt.Zoom,
-		xx[0], xx[len(xx)-1], yy[0], yy[len(yy)-1])
+	s.logger.Printf("[INFO] (fetch) start download %v", mt)
 
 	count := mt.Size() * mt.Size()
 
