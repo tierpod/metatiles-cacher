@@ -65,3 +65,15 @@ func ExampleMakeURL() {
 	// Output:
 	// http://test/10/1/2.png
 }
+
+func ExampleRandomString() {
+	result := RandomString(4)
+	fmt.Println(len(result))
+
+	result2 := RandomString(4)
+	fmt.Println(result == result2)
+
+	// Output:
+	// 4
+	// false
+}
