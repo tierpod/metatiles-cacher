@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/handlers"
+
 	// _ "net/http/pprof"
 
 	"github.com/tierpod/metatiles-cacher/pkg/cache"
@@ -59,8 +61,10 @@ func main() {
 	// init token store for admin entrypoints
 	tokens := newTokenStore(cfg.HTTP.XToken, logger)
 
+	r := http.NewServeMux()
+
 	// admin handlers
-	http.Handle("/status", tokens.Middleware(
+	r.Handle("/status", tokens.Middleware(
 		statusHandler{
 			logger: logger,
 			fs:     fs,
@@ -69,23 +73,23 @@ func main() {
 	))
 
 	// static handler
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	r.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	// service handlers
-	http.Handle("/maps/", mapsHandler{
+	r.Handle("/maps/", mapsHandler{
 		cfg:    cfg,
 		logger: logger,
 		cache:  metaCache,
 		fs:     fs,
 	})
-	http.Handle("/fetch/", fetchHandler{
+	r.Handle("/fetch/", fetchHandler{
 		logger: logger,
 		cfg:    cfg,
 		fs:     fs,
 	})
 
 	logger.Printf("Starting web server on: %v", cfg.HTTP.Bind)
-	err = http.ListenAndServe(cfg.HTTP.Bind, nil)
+	err = http.ListenAndServe(cfg.HTTP.Bind, handlers.LoggingHandler(os.Stdout, r))
 	if err != nil {
 		logger.Fatal(err)
 	}
