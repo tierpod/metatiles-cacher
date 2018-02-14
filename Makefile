@@ -1,4 +1,4 @@
-BINARIES  := bin/convert-latlong bin/metatiles-cacher bin/unpack-metatile
+BINARIES  := bin/metatiles-cacher
 
 VERSION ?= 0.4
 GITHASH := $(shell git rev-parse --short HEAD)
