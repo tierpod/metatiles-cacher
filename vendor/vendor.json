@@ -15,22 +15,22 @@
 			"revisionTime": "2015-06-09T07:04:31Z"
 		},
 		{
-			"checksumSHA1": "2XjtqYIbfCYUOXC7PAC3uVV0m7E=",
+			"checksumSHA1": "l66RxlA7T/LoYmQQU2qGeiDTfBo=",
 			"path": "github.com/tierpod/go-osm/metatile",
-			"revision": "5c1ebe32028904ce62984bf0eb7ea220d9d0506c",
-			"revisionTime": "2018-01-31T15:08:02Z"
+			"revision": "9d16aae044348550b9de0850e97147798c79b9bd",
+			"revisionTime": "2018-02-20T16:28:13Z"
 		},
 		{
-			"checksumSHA1": "YXIaU5bpf9dDjMyxs11jLhRmTz8=",
+			"checksumSHA1": "7jAnWO4f5OK7YFJ1L1bFo+afZ+0=",
 			"path": "github.com/tierpod/go-osm/point",
-			"revision": "5c1ebe32028904ce62984bf0eb7ea220d9d0506c",
-			"revisionTime": "2018-01-31T15:08:02Z"
+			"revision": "9d16aae044348550b9de0850e97147798c79b9bd",
+			"revisionTime": "2018-02-20T16:28:13Z"
 		},
 		{
 			"checksumSHA1": "l1IKYKAX7Hwn53hrWk+eht7nDcM=",
 			"path": "github.com/tierpod/go-osm/tile",
-			"revision": "5c1ebe32028904ce62984bf0eb7ea220d9d0506c",
-			"revisionTime": "2018-01-31T15:08:02Z"
+			"revision": "9d16aae044348550b9de0850e97147798c79b9bd",
+			"revisionTime": "2018-02-20T16:28:13Z"
 		},
 		{
 			"checksumSHA1": "RDJpJQwkF012L6m/2BJizyOksNw=",

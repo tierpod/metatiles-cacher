@@ -26,12 +26,13 @@ const (
 type Metatile struct {
 	Zoom   int
 	Style  string
-	hashes hashes
 	X, Y   int
+	hashes hashes
 }
 
 func (m Metatile) String() string {
-	return fmt.Sprintf("Metatile{Zoom:%v X:%v Y:%v Style:%v Ext:%v}", m.Zoom, m.X, m.Y, m.Style, Ext)
+	s := m.Size() - 1
+	return fmt.Sprintf("Metatile{Zoom:%v X:%v-%v Y:%v-%v Style:%v Ext:%v}", m.Zoom, m.X, m.X+s, m.Y, m.Y+s, m.Style, Ext)
 }
 
 // Filepath returns metatile file path, based on basedir and coordinates.
@@ -70,7 +71,7 @@ func (m Metatile) XYBox() (xx []int, yy []int) {
 // New creates Metatile from (z, x, y) coordinates and style.
 func New(z, x, y int, style string) Metatile {
 	h := xyToHashes(x, y)
-	mx, my := h.XY()
+	mx, my := h.xy()
 	return Metatile{
 		Style:  style,
 		Zoom:   z,
@@ -97,7 +98,7 @@ func NewFromURL(url string) (Metatile, error) {
 	h0, _ := strconv.Atoi(items[7])
 	h := hashes{h0, h1, h2, h3, h4}
 
-	x, y := h.XY()
+	x, y := h.xy()
 
 	return Metatile{
 		Style:  items[1],

@@ -7,7 +7,7 @@ import (
 )
 
 // encodeHeader encodes ml and writes it to w.
-func encodeHeader(w io.Writer, ml *metaLayout) error {
+func encodeHeader(w io.Writer, ml *Layout) error {
 	endian := binary.LittleEndian
 	var err error
 	if err = binary.Write(w, endian, ml.Magic); err != nil {
@@ -41,7 +41,7 @@ func (m Metatile) EncodeWrite(w io.Writer, data [][]byte) error {
 		return fmt.Errorf("wrong index array size: %v < %v", len(data), mSize)
 	}
 
-	ml := &metaLayout{
+	ml := &Layout{
 		Magic: []byte{'M', 'E', 'T', 'A'},
 		Count: int32(mSize),
 		X:     int32(m.X),
@@ -55,7 +55,7 @@ func (m Metatile) EncodeWrite(w io.Writer, data [][]byte) error {
 		tile := data[i]
 		s := int32(len(tile))
 
-		ml.Index = append(ml.Index, metaEntry{
+		ml.Index = append(ml.Index, Entry{
 			Offset: offset,
 			Size:   s,
 		})

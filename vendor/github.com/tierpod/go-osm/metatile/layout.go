@@ -14,13 +14,14 @@ var (
 	ErrEmptyData = errors.New("decoder: empty data")
 )
 
-type metaEntry struct {
+// Entry is the entry from metatile layout entries table.
+type Entry struct {
 	Offset int32
 	Size   int32
 }
 
 // decode tile data for this entry
-func (e metaEntry) decode(r io.ReadSeeker) ([]byte, error) {
+func (e Entry) decode(r io.ReadSeeker) ([]byte, error) {
 	if e.Size == 0 {
 		return nil, ErrEmptyData
 	}
@@ -43,18 +44,23 @@ func (e metaEntry) decode(r io.ReadSeeker) ([]byte, error) {
 	return buf, nil
 }
 
-type metaLayout struct {
+// Layout is the metatile file layout (headers and entries table).
+type Layout struct {
 	Magic   []byte
 	Count   int32
 	X, Y, Z int32
-	Index   []metaEntry
+	Index   []Entry
 }
 
-func (m metaLayout) size() int32 {
+func (m Layout) String() string {
+	return fmt.Sprintf("MetatileLayout{X:%v Y:%v Z:%v Count:%v}", m.X, m.Y, m.Z, m.Count)
+}
+
+func (m Layout) size() int32 {
 	return int32(math.Sqrt(float64(m.Count)))
 }
 
-func (m metaLayout) tileIndex(x, y int32) (int32, error) {
+func (m Layout) tileIndex(x, y int32) (int32, error) {
 	i := (x-m.X)*m.size() + (y - m.Y)
 	if i >= m.Count {
 		return 0, ErrInvalidIndex

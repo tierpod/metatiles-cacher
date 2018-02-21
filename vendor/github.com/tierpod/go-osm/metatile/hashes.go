@@ -2,7 +2,7 @@ package metatile
 
 type hashes [5]int
 
-func (h hashes) XY() (x, y int) {
+func (h hashes) xy() (x, y int) {
 	for i := 4; i >= 0; i-- {
 		x <<= 4
 		y <<= 4

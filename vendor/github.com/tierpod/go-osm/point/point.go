@@ -40,28 +40,3 @@ func (p LatLong) ToZXY(zoom int) ZXY {
 	y = int(math.Floor((1.0 - math.Log(math.Tan(p.Lat*math.Pi/180.0)+1.0/math.Cos(p.Lat*math.Pi/180.0))/math.Pi) / 2.0 * (math.Exp2(float64(zoom)))))
 	return ZXY{Z: zoom, X: x, Y: y}
 }
-
-// ZXYBox converts LatLongs inside box to ZXY coordinates for each zoom in zooms. Returns channel of ZXY.
-func ZXYBox(zooms []int, p1 LatLong, p2 LatLong) <-chan (ZXY) {
-	ch := make(chan ZXY)
-
-	// swap points if wrong order
-	if p1.Lat < p2.Lat {
-		p1, p2 = p2, p1
-	}
-
-	go func() {
-		defer close(ch)
-		for _, z := range zooms {
-			pTop := p1.ToZXY(z)
-			pBottom := p2.ToZXY(z)
-			for x := pTop.X; x <= pBottom.X; x++ {
-				for y := pTop.Y; y <= pBottom.Y; y++ {
-					ch <- ZXY{Z: z, X: x, Y: y}
-				}
-			}
-		}
-	}()
-
-	return ch
-}

@@ -10,7 +10,7 @@ import (
 
 // Decoder is the metatile file decoder wrapper.
 type Decoder struct {
-	ml *metaLayout
+	ml *Layout
 	r  io.ReadSeeker
 }
 
@@ -27,9 +27,9 @@ func NewDecoder(r io.ReadSeeker) (*Decoder, error) {
 	}, nil
 }
 
-// Header returns metatile header: x, y, z coordinates and count of tiles.
-func (m *Decoder) Header() (x, y, z, count int32) {
-	return m.ml.X, m.ml.Y, m.ml.Z, m.ml.Count
+// Layout returns metatile layout.
+func (m *Decoder) Layout() *Layout {
+	return m.ml
 }
 
 // Size returns metatile size.
@@ -37,15 +37,12 @@ func (m *Decoder) Size() int {
 	return int(m.ml.size())
 }
 
-// Entries is the array of metaEntry.
-type Entries []metaEntry
-
 // Entries returns metatile index table (offsets and sizes).
-func (m *Decoder) Entries() Entries {
+func (m *Decoder) Entries() []Entry {
 	return m.ml.Index
 }
 
-// Tile reads data for tile with (x, y) coordinates.
+// Tile reads tile data with (x, y) coordinates.
 func (m *Decoder) Tile(x, y int) ([]byte, error) {
 	i, err := m.ml.tileIndex(int32(x), int32(y))
 	if err != nil {
@@ -61,8 +58,7 @@ func (m *Decoder) Tile(x, y int) ([]byte, error) {
 	return data, nil
 }
 
-// Tiles reads data for all tiles in metatile and returns all data as array of data (includes empty
-// data).
+// Tiles reads all tiles data from metatile and returns as array of data (includes empty data).
 func (m *Decoder) Tiles() ([][]byte, error) {
 	var tiles [][]byte
 
@@ -78,7 +74,7 @@ func (m *Decoder) Tiles() ([][]byte, error) {
 	return tiles, nil
 }
 
-// TilesMap reads data for all tiles in metatile and returns only none-empty data as map.
+// TilesMap reads all tiles data from metatile and returns as map of point = data (not includes empty data).
 func (m *Decoder) TilesMap() (map[point.ZXY][]byte, error) {
 	r := make(map[point.ZXY][]byte)
 
@@ -100,10 +96,10 @@ func (m *Decoder) TilesMap() (map[point.ZXY][]byte, error) {
 	return r, nil
 }
 
-// decodeHeader reads metatile from r and decodes header to metaLayout struct.
-func decodeHeader(r io.Reader) (*metaLayout, error) {
+// decodeHeader reads metatile from r and decodes header to Layout struct.
+func decodeHeader(r io.Reader) (*Layout, error) {
 	endian := binary.LittleEndian
-	ml := new(metaLayout)
+	ml := new(Layout)
 
 	ml.Magic = make([]byte, 4)
 	err := binary.Read(r, endian, &ml.Magic)
@@ -128,7 +124,7 @@ func decodeHeader(r io.Reader) (*metaLayout, error) {
 	}
 
 	for i := int32(0); i < ml.Count; i++ {
-		var entry metaEntry
+		var entry Entry
 		if err = binary.Read(r, endian, &entry); err != nil {
 			return nil, err
 		}
